@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
-import { Button } from "react-bootstrap";
 import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
 import logo from "../assets/logo.png";
 
-function StudentHome() {
+function TeacherHome() {
+  const { logOut, user, firstName, lastName, userRole } = useUserAuth();
+  const navigate = useNavigate();
+
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
-  const { logOut, user, firstName, lastName, userRole } = useUserAuth();
-  const navigate = useNavigate();
 
   let menuRef1 = useRef();
   let menuRef2 = useRef();
@@ -106,7 +105,11 @@ function StudentHome() {
                 </defs>
               </svg>
             </div>
-            <div className={`menu-1-dropdown ${open2 ? "active" : "inactive"}`}>
+            <div
+              className={`menu-1-dropdown ${
+                open2 ? "active" : "inactive"
+              } teacher-dropdown-menu-1`}
+            >
               <div className="custom-h5 d-flex flex-column align-items-end">
                 <Link to={"/profile"} className="text-black">
                   ข้อมูลส่วนตัว
@@ -130,6 +133,11 @@ function StudentHome() {
                 {userRole === "นักเรียน" && (
                   <Link to="/student-table" className="text-black">
                     ตารางเรียน
+                  </Link>
+                )}
+                {userRole === "ครู" && (
+                  <Link to="/teacher-table" className="text-black">
+                    ตารางสอน
                   </Link>
                 )}
               </div>
@@ -174,7 +182,7 @@ function StudentHome() {
             <div
               className={`menu-2-dropdown ${
                 open3 ? "active" : "inactive"
-              } d-flex justify-content-end align-items-center`}
+              } teacher-dropdown-menu-2`}
             >
               <div className="custom-h5 d-flex flex-column align-items-end">
                 {userRole === "admin" && (
@@ -185,6 +193,11 @@ function StudentHome() {
                 {userRole === "นักเรียน" && (
                   <Link to="/school-record-management" className="text-black">
                     ผลคะแนนรายวิชา
+                  </Link>
+                )}
+                {userRole === "ครู" && (
+                  <Link to="/grade-management" className="text-black">
+                    จัดการคะแนนรายวิชา
                   </Link>
                 )}
               </div>
@@ -285,7 +298,9 @@ function StudentHome() {
           </form>
         </div>
       </div>
-      <div>Student Homepage</div>
+      <div className="p-2" style={{ height: "825px" }}>
+        Teacher Homepage
+      </div>
       <div className="footer">
         <div className="custom-h3">ติดต่อเรา</div>
       </div>
@@ -293,4 +308,4 @@ function StudentHome() {
   );
 }
 
-export default StudentHome;
+export default TeacherHome;

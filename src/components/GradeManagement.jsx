@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link } from "react-router-dom";
 import { useUserAuth } from "../context/UserAuthContext";
-import { Button } from "react-bootstrap";
+import { useUserProfile } from "../context/ProfileDataContex";
 import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
 import logo from "../assets/logo.png";
 
-function StudentHome() {
+function GradeManagement() {
+  const [students, setStudents] = useState([]);
+  const [studentClass, setStudentClass] = useState("ประถมศึกษาปีที่ 1");
+
+  const { logOut, user, firstName, lastName, userRole } = useUserAuth();
+  const { profileData } = useUserProfile();
+  const navigate = useNavigate();
+
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
-  const { logOut, user, firstName, lastName, userRole } = useUserAuth();
-  const navigate = useNavigate();
 
   let menuRef1 = useRef();
   let menuRef2 = useRef();
@@ -51,8 +55,31 @@ function StudentHome() {
     }
   };
 
+  useEffect(() => {
+    if (!profileData || profileData.length === 0) return;
+
+    const loadStudents = profileData.filter(
+      (profile) => profile.position === "นักเรียน"
+    );
+
+    setStudents(loadStudents);
+    console.log("นักเรียนทั้งหมด:", loadStudents);
+  }, [profileData]);
+
+  const filteredData = students.filter(
+    (item) => item.classLevel === studentClass
+  );
+
+  const handelEdit = async (id) => {
+    try {
+      navigate(`/grade-management/student?id=${id}`);
+    } catch (err) {
+      console.log(err.message);
+    }
+  };
+
   return (
-    <div className="screen">
+    <div style={{ background: "#BBBBBB" }}>
       <div className="nav">
         <div className="logo-container">
           <div className="logo-img">
@@ -106,7 +133,11 @@ function StudentHome() {
                 </defs>
               </svg>
             </div>
-            <div className={`menu-1-dropdown ${open2 ? "active" : "inactive"}`}>
+            <div
+              className={`menu-1-dropdown ${
+                open2 ? "active" : "inactive"
+              } teacher-dropdown-menu-1`}
+            >
               <div className="custom-h5 d-flex flex-column align-items-end">
                 <Link to={"/profile"} className="text-black">
                   ข้อมูลส่วนตัว
@@ -130,6 +161,11 @@ function StudentHome() {
                 {userRole === "นักเรียน" && (
                   <Link to="/student-table" className="text-black">
                     ตารางเรียน
+                  </Link>
+                )}
+                {userRole === "ครู" && (
+                  <Link to="/teacher-table" className="text-black">
+                    ตารางสอน
                   </Link>
                 )}
               </div>
@@ -174,7 +210,7 @@ function StudentHome() {
             <div
               className={`menu-2-dropdown ${
                 open3 ? "active" : "inactive"
-              } d-flex justify-content-end align-items-center`}
+              } teacher-dropdown-menu-2`}
             >
               <div className="custom-h5 d-flex flex-column align-items-end">
                 {userRole === "admin" && (
@@ -185,6 +221,11 @@ function StudentHome() {
                 {userRole === "นักเรียน" && (
                   <Link to="/school-record-management" className="text-black">
                     ผลคะแนนรายวิชา
+                  </Link>
+                )}
+                {userRole === "ครู" && (
+                  <Link to="/grade-management" className="text-black">
+                    จัดการคะแนนรายวิชา
                   </Link>
                 )}
               </div>
@@ -285,7 +326,99 @@ function StudentHome() {
           </form>
         </div>
       </div>
-      <div>Student Homepage</div>
+      <div className="p-4" style={{ height: "825px" }}>
+        <div className="bg-white w-100 h-100">
+          <div className="d-flex justify-content-center custom-h1 fw-bold p-3">
+            จัดการคะแนนรายวิชา
+          </div>
+          <div className="custom-h2 d-flex align-items-center gap-4 p-3">
+            ตัวเลือก
+            <div className="custom-select">
+              <select
+                className="custom-h3 text-center"
+                style={{ width: "200px", backgroundColor: "#BBBBBB" }}
+                onChange={(e) => setStudentClass(e.target.value)}
+              >
+                <option value="ประถมศึกษาปีที่ 1">ประถมศึกษาปีที่ 1</option>
+                <option value="ประถมศึกษาปีที่ 2">ประถมศึกษาปีที่ 2</option>
+                <option value="ประถมศึกษาปีที่ 3">ประถมศึกษาปีที่ 3</option>
+                <option value="ประถมศึกษาปีที่ 4">ประถมศึกษาปีที่ 4</option>
+                <option value="ประถมศึกษาปีที่ 5">ประถมศึกษาปีที่ 5</option>
+                <option value="ประถมศึกษาปีที่ 6">ประถมศึกษาปีที่ 6</option>
+              </select>
+            </div>
+          </div>
+          <div className="d-flex flex-column border border-black w-50 h-75 ms-3">
+            <div
+              className="d-flex"
+              style={{
+                borderBottom: "1px solid",
+                backgroundColor: "#FFD786",
+              }}
+            >
+              <div className="custom-h3 d-flex justify-content-center w-25">
+                รหัสประจำตัว
+              </div>
+              <div
+                className="custom-h3 d-flex justify-content-center w-50"
+                style={{ borderLeft: "1px solid" }}
+              >
+                ชื่อ-สกุล
+              </div>
+              <div
+                className="custom-h3 d-flex justify-content-center w-25"
+                style={{ borderLeft: "1px solid" }}
+              >
+                ตัวเลือก
+              </div>
+            </div>
+            <div className="d-flex flex-column overflow-auto">
+              {[...filteredData]
+                .sort((a, b) => a.email.localeCompare(b.email))
+                .map((item, index) => (
+                  <div className="d-flex" key={index}>
+                    <div className="d-flex align-items-center w-25">
+                      <div
+                        className="mt-1 mb-1 p-1 w-100 text-center"
+                        style={{ backgroundColor: "#BBBBBB" }}
+                      >
+                        {item.email?.replace("@gmail.com", "")}
+                      </div>
+                    </div>
+                    <div
+                      className="d-flex align-items-center w-50"
+                      style={{ borderLeft: "1px solid" }}
+                    >
+                      <div
+                        className="mt-1 mb-1 p-1 w-100 text-center"
+                        style={{ backgroundColor: "#EFEFEF" }}
+                      >
+                        {item.firstName} {item.lastName}
+                      </div>
+                    </div>
+                    <div
+                      className="d-flex justify-content-center p-1 w-25"
+                      style={{ width: "100px", borderLeft: "1px solid" }}
+                    >
+                      <button
+                        className="p-1 btn btn-success"
+                        style={{
+                          width: "100px",
+                          border: "#61C554",
+                          borderRadius: "20px",
+                          background: "#61C554",
+                        }}
+                        onClick={() => handelEdit(item.id)}
+                      >
+                        แก้ไข
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="footer">
         <div className="custom-h3">ติดต่อเรา</div>
       </div>
@@ -293,4 +426,4 @@ function StudentHome() {
   );
 }
 
-export default StudentHome;
+export default GradeManagement;

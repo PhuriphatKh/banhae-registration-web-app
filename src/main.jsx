@@ -4,11 +4,15 @@ import App from "./App.jsx";
 import Register from "./components/Register.jsx";
 import AdminHome from "./components/AdminHome.jsx";
 import StudentHome from "./components/StudentHome.jsx";
+import TeacherHome from "./components/TeacherHome.jsx";
 import Profile from "./components/Profile.jsx";
 import UserManagement from "./components/UserManagement.jsx";
 import StudentTableManagement from "./components/StudentTableManagement.jsx";
 import TeacherTableManagement from "./components/TeacherTableManagement.jsx";
 import SchoolRecordManagement from "./components/SchoolRecordManagement.jsx";
+import TeacherTable from "./components/TeacherTable.jsx";
+import GradeManagement from "./components/GradeManagement.jsx";
+import GradeManagementStudent from "./components/GradeManagementStudent.jsx";
 import EditUserProfile from "./components/EditUserProfile.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import AdminRoute from "./auth/AdminRoute.jsx";
@@ -18,7 +22,11 @@ import "./index.css";
 
 import { UserAuthContextProvider } from "./context/UserAuthContext.jsx";
 import { ProfileDataContextProvider } from "./context/ProfileDataContex.jsx";
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { StudentTableContexProvider } from "./context/StudentTableContex.jsx";
+import { TeacherTableContexProvider } from "./context/TeacherTableContext.jsx";
+import { StudentGradesContexProvider } from "./context/StudentGradesContex.jsx";
+
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -26,21 +34,15 @@ import ReactDOM from "react-dom/client";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: (
+      <GuestRoute>
+        <App />
+      </GuestRoute>
+    ),
   },
   {
     path: "/register",
     element: <Register />,
-  },
-  {
-    path: "/home/admin",
-    element: (
-      <ProtectedRoute>
-        <AdminRoute>
-          <AdminHome />
-        </AdminRoute>
-      </ProtectedRoute>
-    ),
   },
   {
     path: "/home/นักเรียน",
@@ -49,6 +51,38 @@ const router = createBrowserRouter([
         <StudentRoute>
           <StudentHome />
         </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/home/ครู",
+    element: (
+      <ProtectedRoute>
+        <TeacherHome />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/teacher-table",
+    element: (
+      <ProtectedRoute>
+        <TeacherTable />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/grade-management",
+    element: (
+      <ProtectedRoute>
+        <GradeManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/grade-management/student",
+    element: (
+      <ProtectedRoute>
+        <GradeManagementStudent />
       </ProtectedRoute>
     ),
   },
@@ -69,10 +103,22 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: "/home/admin",
+    element: (
+      <ProtectedRoute>
+        <AdminRoute>
+          <AdminHome />
+        </AdminRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: "/usermanagement",
     element: (
       <ProtectedRoute>
-        <UserManagement />
+        <AdminRoute>
+          <UserManagement />
+        </AdminRoute>
       </ProtectedRoute>
     ),
   },
@@ -80,7 +126,9 @@ const router = createBrowserRouter([
     path: "/student-table-management",
     element: (
       <ProtectedRoute>
-        <StudentTableManagement />
+        <AdminRoute>
+          <StudentTableManagement />
+        </AdminRoute>
       </ProtectedRoute>
     ),
   },
@@ -88,7 +136,9 @@ const router = createBrowserRouter([
     path: "/teacher-table-management",
     element: (
       <ProtectedRoute>
-        <TeacherTableManagement />
+        <AdminRoute>
+          <TeacherTableManagement />
+        </AdminRoute>
       </ProtectedRoute>
     ),
   },
@@ -96,7 +146,9 @@ const router = createBrowserRouter([
     path: "/school-record-management",
     element: (
       <ProtectedRoute>
-        <SchoolRecordManagement />
+        <AdminRoute>
+          <SchoolRecordManagement />
+        </AdminRoute>
       </ProtectedRoute>
     ),
   },
@@ -104,7 +156,9 @@ const router = createBrowserRouter([
     path: "/usermanagement/profile",
     element: (
       <ProtectedRoute>
-        <EditUserProfile />
+        <AdminRoute>
+          <EditUserProfile />
+        </AdminRoute>
       </ProtectedRoute>
     ),
   },
@@ -115,7 +169,13 @@ const root = document.getElementById("root");
 ReactDOM.createRoot(root).render(
   <UserAuthContextProvider>
     <ProfileDataContextProvider>
-      <RouterProvider router={router} />
+      <StudentTableContexProvider>
+        <TeacherTableContexProvider>
+          <StudentGradesContexProvider>
+            <RouterProvider router={router} />
+          </StudentGradesContexProvider>
+        </TeacherTableContexProvider>
+      </StudentTableContexProvider>
     </ProfileDataContextProvider>
   </UserAuthContextProvider>
 );

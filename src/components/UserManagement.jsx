@@ -2,15 +2,45 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
-import { Button } from "react-bootstrap";
+import { Form, Alert, Button, Row, Col, Card } from "react-bootstrap";
+import { db } from "../firebase";
+import { updateDoc, setDoc, doc, getDoc } from "firebase/firestore";
 import logo from "../assets/logo.png";
 
 function UserManagement() {
+  const [regFirstName, setRegFirstName] = useState("");
+  const [regLastName, setRegLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [regPosition, setRegPosition] = useState("ครู");
+  const [regClassLevel, setRegClassLevel] = useState("ประถมศึกษาปีที่ 1");
+  const [regtaughtSubject, setRegTaughtSubject] = useState("");
+  // const [regReligion, setRegReligion] = useState("");
+  // const [regNationality, setRegNationality] = useState("");
+  // const [regBirthday, setRegBirthday] = useState("");
+  // const [regTeleNum, setRegTeleNum] = useState("");
+  // const [regFatherName, setRegFatherName] = useState("");
+  // const [regMotherName, setRegMotherName] = useState("");
+  // const [regParentName, setRegParentName] = useState("");
+  // const [regFatherNum, setRegFatherNum] = useState("");
+  // const [regMotherNum, setRegMotherNum] = useState("");
+  // const [regParentNum, setRegParentNum] = useState("");
+  // const [regVillageName, setRegVillageName] = useState("");
+  // const [regHouseNum, setRegHouseNum] = useState("");
+  // const [regVillageNum, setRegVillageNum] = useState("");
+  // const [regRoad, setRegRoad] = useState("");
+  // const [regSubDistrict, setRegSubDistrict] = useState("");
+  // const [regDistrict, setRegDistrict] = useState("");
+  // const [regProvince, setRegProvince] = useState("");
+  // const [regZipcode, setRegZipcode] = useState("");
+
+  const [error, setError] = useState("");
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
   const [position, setPosition] = useState("ครู");
-  const { logOut, user, firstName, lastName } = useUserAuth();
+  const [studentClass, setStudentClass] = useState("ประถมศึกษาปีที่ 1");
+  const { signUp, logOut, user, firstName, lastName } = useUserAuth();
   const { profileData, userEdit, userDelete } = useUserProfile();
   const navigate = useNavigate();
 
@@ -43,6 +73,72 @@ function UserManagement() {
     };
   });
 
+  // useEffect(() => {
+  //   const counter = async () => {
+  //     try {
+  //       const counterdoc = await getDoc(
+  //         doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
+  //       );
+  //       setLastStudentID(counterdoc.data().lastStudentID +1);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+
+  //   counter();
+  // }, []);
+
+  async function counter1() {
+    //generate รหัสนักเรียน
+    let newStudentID = null;
+    try {
+      const counterdoc = await getDoc(
+        doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
+      );
+      if (counterdoc.exists()) {
+        newStudentID = counterdoc.data().lastStudentID + 1;
+        await updateDoc(doc(db, "id_counter", "kUHECVelJyWh1piBZsTH"), {
+          lastStudentID: newStudentID,
+        });
+      } else {
+        console.log("ไม่พบเอกสาร counter");
+      }
+    } catch (error) {
+      console.log("เกิดข้อผิดพลาด:", error);
+    }
+    return newStudentID;
+  }
+
+  async function counter2() {
+    //generate รหัสครู
+    let newTeacherID = null;
+    try {
+      const counterdoc = await getDoc(
+        doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
+      );
+      if (counterdoc.exists()) {
+        newTeacherID = counterdoc.data().lastTeacherID + 1;
+        await updateDoc(doc(db, "id_counter", "kUHECVelJyWh1piBZsTH"), {
+          lastTeacherID: newTeacherID,
+        });
+      } else {
+        console.log("ไม่พบเอกสาร counter");
+      }
+    } catch (error) {
+      console.log("เกิดข้อผิดพลาด:", error);
+    }
+    return newTeacherID;
+  }
+
+  const filteredData = profileData.filter((item) => {
+    if (position === "ครู") {
+      return item.position === "ครู";
+    } else if (position === "นักเรียน") {
+      return item.position === "นักเรียน" && item.classLevel === studentClass;
+    }
+    return true;
+  });
+
   const handleLogout = async () => {
     try {
       await logOut();
@@ -52,13 +148,13 @@ function UserManagement() {
     }
   };
 
-  const handleAdd = async () => {
-    try {
-      navigate("/register");
-    } catch (err) {
-      console.log(err.message);
-    }
-  };
+  // const handleAdd = async () => {
+  //   try {
+  //     navigate("/register");
+  //   } catch (err) {
+  //     console.log(err.message);
+  //   }
+  // };
 
   const handelEdit = async (id) => {
     try {
@@ -74,6 +170,66 @@ function UserManagement() {
       await userDelete(id);
     } catch (err) {
       console.log(err.message);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    let lastStudentID = null;
+    let lastTeacherID = null;
+    let user = null;
+
+    try {
+      if (regPosition === "นักเรียน") {
+        lastStudentID = await counter1();
+        user = await signUp(
+          `${lastStudentID}@gmail.com`,
+          `banhae${lastStudentID}`
+        );
+      }
+
+      if (regPosition === "ครู") {
+        lastTeacherID = await counter2();
+        user = await signUp(
+          `${lastTeacherID}@gmail.com`,
+          `banhae${lastTeacherID}`
+        );
+      }
+
+      if (!user) {
+        setError("ไม่สามารถสมัครผู้ใช้ได้ (user is null)");
+        return;
+      }
+
+      const userProfile = {
+        studentID: regPosition === "นักเรียน" ? lastStudentID : null,
+        teacherID: regPosition === "ครู" ? lastTeacherID : null,
+        taughtSubject: regPosition === "ครู" ? regtaughtSubject : null,
+        email: user.email,
+        firstName: regFirstName,
+        lastName: regLastName,
+        position: regPosition,
+        classLevel: regClassLevel,
+        createdAt: new Date(),
+      };
+
+      await setDoc(doc(db, "profile", user.uid), userProfile);
+
+      console.log("✅ User registered and data saved to Firestore!");
+
+      // ✅ เคลียร์ฟอร์ม
+      setRegFirstName("");
+      setRegLastName("");
+      setEmail("");
+      setPassword("");
+      setRegPosition("ครู");
+      setRegClassLevel("ประถมศึกษาปีที่ 1");
+      setRegtaughtSubject("");
+    } catch (err) {
+      setError(err.message);
+      console.log("❌ Error during registration:", err);
     }
   };
 
@@ -286,127 +442,226 @@ function UserManagement() {
                 type="button"
                 onClick={handleLogout}
               >
-                <div className="custom-h6">ออกจากระบบ</div>
+                <div className="custom-h5">ออกจากระบบ</div>
               </button>
             </div>
           </form>
         </div>
       </div>
 
-      <div className="shool-record-management-detail">
-        <div className="shool-record-management-container">
-          <div className="custom-h2 d-flex gap-4">
-            ตัวเลือก
-            <select
-              className="text-center"
-              style={{ width: "200px", backgroundColor: "#BBBBBB" }}
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-            >
-              <option value="ครู">ครู</option>
-              <option value="นักเรียน">นักเรียน</option>
-            </select>
-            {position === "นักเรียน" && (
-              <select
-                className="text-center"
-                style={{ width: "200px", backgroundColor: "#BBBBBB" }}
-              >
-                <option value="ประถมศึกษาปีที่ 1">ประถมศึกษาปีที่ 1</option>
-                <option value="ประถมศึกษาปีที่ 2">ประถมศึกษาปีที่ 2</option>
-                <option value="ประถมศึกษาปีที่ 3">ประถมศึกษาปีที่ 3</option>
-                <option value="ประถมศึกษาปีที่ 4">ประถมศึกษาปีที่ 4</option>
-                <option value="ประถมศึกษาปีที่ 5">ประถมศึกษาปีที่ 5</option>
-                <option value="ประถมศึกษาปีที่ 6">ประถมศึกษาปีที่ 6</option>
-              </select>
-            )}
-            <button
-              className="text-center btn btn-success"
-              style={{ width: "200px", border: "1px solid" }}
-              onClick={handleAdd}
-            >
-              เพิ่มผู้ใช้งาน
-            </button>
-          </div>
-          <div className="shool-record-management-table">
-            <div
-              className="d-flex"
-              style={{ borderBottom: "1px solid", backgroundColor: "#FFD786" }}
-            >
-              <div
-                className="custom-h3 d-flex justify-content-center"
-                style={{ width: "200px" }}
-              >
-                รหัสประจำตัว
-              </div>
-              <div
-                className="custom-h3 d-flex justify-content-center"
-                style={{ width: "250px", borderLeft: "1px solid" }}
-              >
-                ชื่อ-สกุล
-              </div>
-              <div
-                className="custom-h3 d-flex justify-content-center"
-                style={{ width: "200px", borderLeft: "1px solid" }}
-              >
-                ตัวเลือก
-              </div>
-            </div>
-            <div
-              className="d-flex flex-column w-100 overflow-auto"
-              style={{ height: "600px" }}
-            >
-              {profileData.map((item, index) => (
-                <div className="d-flex" key={index}>
-                  <div className="d-flex align-items-center">
-                    <div
-                      className="mt-1 mb-1 p-1"
-                      style={{ width: "200px", backgroundColor: "#BBB" }}
+      <div className="shool-record-management-detail p-4">
+        <Card className="shadow-lg rounded-4 w-100 h-100">
+          <Card.Body>
+            <h3 className="d-flex justify-content-center w-100 my-2 fw-bold">
+              จัดการข้อมูลผู้ใช้
+            </h3>
+            <h3 className="mb-4 fw-bold">ตัวเลือก</h3>
+            <Row className="mb-4">
+              <Col md={2}>
+                <div className="select-wrapper">
+                  <Form.Select
+                    value={position}
+                    onChange={(e) => setPosition(e.target.value)}
+                    className="modern-select text-center"
+                  >
+                    <option value="ครู">ครู</option>
+                    <option value="นักเรียน">นักเรียน</option>
+                  </Form.Select>
+                </div>
+              </Col>
+              {position === "นักเรียน" && (
+                <Col md={2}>
+                  <div className="select-wrapper">
+                    <Form.Select
+                      value={studentClass}
+                      onChange={(e) => setStudentClass(e.target.value)}
+                      className="modern-select text-center"
                     >
-                      {item.email}
+                      {[
+                        "ประถมศึกษาปีที่ 1",
+                        "ประถมศึกษาปีที่ 2",
+                        "ประถมศึกษาปีที่ 3",
+                        "ประถมศึกษาปีที่ 4",
+                        "ประถมศึกษาปีที่ 5",
+                        "ประถมศึกษาปีที่ 6",
+                      ].map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </div>
+                </Col>
+              )}
+            </Row>
+
+            <Row className="g-4">
+              <Col md={7}>
+                <div
+                  className="table-wrapper border rounded bg-white shadow-sm"
+                  style={{ height: "530px", overflow: "hidden" }}
+                >
+                  <table className="table table-bordered table-hover text-center m-0">
+                    <thead
+                      className="table-warning"
+                      style={{ position: "sticky", top: 0, zIndex: 2 }}
+                    >
+                      <tr>
+                        <th style={{ width: "33.3%" }}>รหัสประจำตัว</th>
+                        <th style={{ width: "33.3%" }}>ชื่อ-สกุล</th>
+                        <th style={{ width: "33.3%" }}>ตัวเลือก</th>
+                      </tr>
+                    </thead>
+                  </table>
+                  <div className="table-body-scroll no-scrollbar-container">
+                    <div className="scroll-inner">
+                      <table className="table table-bordered text-center m-0 table-hover">
+                        <tbody>
+                          {[...filteredData]
+                            .sort((a, b) => a.email.localeCompare(b.email))
+                            .map((item, index) => (
+                              <tr key={index}>
+                                <td style={{ width: "33.3%" }}>
+                                  <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                    {item.email?.replace("@gmail.com", "")}
+                                  </div>
+                                </td>
+
+                                <td style={{ width: "33.3%" }}>
+                                  <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                  {item.firstName} {item.lastName}
+                                  </div>
+                                </td>
+                                <td style={{ width: "33.3%" }}>
+                                  <div className="d-flex justify-content-center gap-2">
+                                    <Button
+                                      className="edit-butt"
+                                      size="sm"
+                                      onClick={() => handelEdit(item.id)}
+                                    >
+                                      แก้ไข
+                                    </Button>
+                                    <Button
+                                      className="delete-butt"
+                                      size="sm"
+                                      onClick={() => handelDelete(item.id)}
+                                    >
+                                      ลบ
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
                     </div>
-                  </div>
-                  <div
-                    className="d-flex align-items-center"
-                    style={{ width: "250px", borderLeft: "1px solid" }}
-                  >
-                    <div
-                      className="mt-1 mb-1 p-1"
-                      style={{ width: "250px", backgroundColor: "#EFEFEF" }}
-                    >
-                      {item.firstName} {item.lastName}
-                    </div>
-                  </div>
-                  <div
-                    className="d-flex justify-content-center p-1"
-                    style={{ width: "100px", borderLeft: "1px solid" }}
-                  >
-                    <button
-                      className="p-1 btn btn-success"
-                      style={{ width: "60px", borderRadius: "20px" }}
-                      onClick={() => handelEdit(item.id)}
-                    >
-                      แก้ไข
-                    </button>
-                  </div>
-                  <div
-                    className="d-flex justify-content-center p-1"
-                    style={{ width: "100px", borderLeft: "1px solid" }}
-                  >
-                    <button
-                      className="p-1 btn btn-danger"
-                      style={{ width: "60px", borderRadius: "20px" }}
-                      onClick={() => handelDelete(item.id)}
-                    >
-                      ลบ
-                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+              </Col>
 
+              <Col md={5}>
+                <Card className="p-4 shadow-sm">
+                  <Card.Title className="fw-bold mb-3">
+                    เพิ่มข้อมูลผู้ใช้
+                  </Card.Title>
+                  {error && <div className="alert alert-danger">{error}</div>}
+                  <Form onSubmit={handleSubmit}>
+                    <Row className="mb-3">
+                      <Col>
+                        <div className="select-wrapper">
+                          <Form.Select
+                            value={regPosition}
+                            onChange={(e) => setRegPosition(e.target.value)}
+                            className="modern-select text-center"
+                          >
+                            <option value="ครู">ครู</option>
+                            <option value="นักเรียน">นักเรียน</option>
+                          </Form.Select>
+                        </div>
+                      </Col>
+                      <Col>
+                        {regPosition === "ครู" ? (
+                          <div className="select-wrapper">
+                            <Form.Select
+                              value={regtaughtSubject}
+                              onChange={(e) =>
+                                setRegTaughtSubject(e.target.value)
+                              }
+                              className="modern-select text-center"
+                            >
+                              <option value="" disabled>
+                                -- เลือกวิชาที่สอน --
+                              </option>
+                              <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
+                              <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                              <option value="ภาษาไทย">ภาษาไทย</option>
+                              <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
+                              <option value="สังคมศึกษา">สังคมศึกษา</option>
+                              <option value="ลูกเสือ-เนตรนารี">
+                                ลูกเสือ-เนตรนารี
+                              </option>
+                            </Form.Select>
+                          </div>
+                        ) : (
+                          <div className="select-wrapper">
+                            <Form.Select
+                              value={regClassLevel}
+                              onChange={(e) => setRegClassLevel(e.target.value)}
+                              className="modern-select text-center"
+                            >
+                              {[
+                                "ประถมศึกษาปีที่ 1",
+                                "ประถมศึกษาปีที่ 2",
+                                "ประถมศึกษาปีที่ 3",
+                                "ประถมศึกษาปีที่ 4",
+                                "ประถมศึกษาปีที่ 5",
+                                "ประถมศึกษาปีที่ 6",
+                              ].map((year) => (
+                                <option key={year} value={year}>
+                                  {year}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </div>
+                        )}
+                      </Col>
+                    </Row>
+
+                    <Row className="mb-3">
+                      <Col>
+                        <Form.Control
+                          type="text"
+                          placeholder="ชื่อ"
+                          value={regFirstName}
+                          onChange={(e) => setRegFirstName(e.target.value)}
+                          className="modern-input"
+                        />
+                      </Col>
+                      <Col>
+                        <Form.Control
+                          type="text"
+                          placeholder="สกุล"
+                          value={regLastName}
+                          onChange={(e) => setRegLastName(e.target.value)}
+                          className="modern-input"
+                        />
+                      </Col>
+                    </Row>
+
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="w-100 rounded-pill mt-2"
+                    >
+                      เพิ่มผู้ใช้งาน
+                    </Button>
+                  </Form>
+                </Card>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+      </div>
       <div className="footer">
         <div className="custom-h3">ติดต่อเรา</div>
       </div>

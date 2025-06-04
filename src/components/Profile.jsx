@@ -11,7 +11,7 @@ function Profile() {
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
-  const { logOut, user, firstName, lastName } = useUserAuth();
+  const { logOut, user, firstName, lastName, userRole } = useUserAuth();
   const { profileData } = useUserProfile();
   const navigate = useNavigate();
 
@@ -113,15 +113,32 @@ function Profile() {
                 <Link to={"/profile"} className="text-black">
                   ข้อมูลส่วนตัว
                 </Link>
-                <Link to={"/usermanagement"} className="text-black">
-                  จัดการข้อมูลผู้ใช้
-                </Link>
-                <Link to={"/student-table-management"} className="text-black">
-                  จัดการตารางเรียน
-                </Link>
-                <Link to={"/teacher-table-management"} className="text-black">
-                  จัดการตารางสอน
-                </Link>
+                {userRole === "admin" && (
+                  <>
+                    <Link to="/usermanagement" className="text-black">
+                      จัดการข้อมูลผู้ใช้
+                    </Link>
+                    <Link to="/student-table-management" className="text-black">
+                      จัดการตารางเรียน
+                    </Link>
+                    <Link
+                      to={"/teacher-table-management"}
+                      className="text-black"
+                    >
+                      จัดการตารางสอน
+                    </Link>
+                  </>
+                )}
+                {userRole === "นักเรียน" && (
+                  <Link to="/student-table" className="text-black">
+                    ตารางเรียน
+                  </Link>
+                )}
+                {userRole === "ครู" && (
+                  <Link to="/teacher-table" className="text-black">
+                    ตารางสอน
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -166,10 +183,22 @@ function Profile() {
                 open3 ? "active" : "inactive"
               } d-flex justify-content-end align-items-center`}
             >
-              <div className="custom-h5">
-                <Link to="/school-record-management" className="text-black">
-                  จัดการผลการเรียน
-                </Link>
+              <div className="custom-h5 d-flex flex-column align-items-end">
+                {userRole === "admin" && (
+                  <Link to="/school-record-management" className="text-black">
+                    จัดการผลการเรียน
+                  </Link>
+                )}
+                {userRole === "นักเรียน" && (
+                  <Link to="/school-record-management" className="text-black">
+                    ผลคะแนนรายวิชา
+                  </Link>
+                )}
+                {userRole === "ครู" && (
+                  <Link to="/grade-management" className="text-black">
+                    จัดการคะแนนรายวิชา
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -254,7 +283,9 @@ function Profile() {
                   fill="black"
                 />
               </svg>
-              <div className="custom-h5">{firstName} {lastName}</div>
+              <div className="custom-h5">
+                {firstName} {lastName}
+              </div>
               <button
                 className="logout-button"
                 type="button"

@@ -2,50 +2,110 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
-import { Button } from "react-bootstrap";
+import { Form, Alert, Button } from "react-bootstrap";
 import { db } from "../firebase";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import logo from "../assets/logo.png";
 
 function EditUserProfile() {
-  const [open1, setOpen1] = useState(false);
-  const [open2, setOpen2] = useState(false);
-  const [open3, setOpen3] = useState(false);
-
-  const [id, setId] = useState("");
+  const [profileID, setProfileID] = useState("");
+  const [regFirstName, setRegFirstName] = useState("");
+  const [regLastName, setRegLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [profileData, setProfileData] = useState();
+  const [regPosition, setRegPosition] = useState("");
+  const [regClassLevel, setRegClassLevel] = useState("-");
+  const [regReligion, setRegReligion] = useState("");
+  const [regNationality, setRegNationality] = useState("");
+  const [regBirthday, setRegBirthday] = useState("");
+  const [regTeleNum, setRegTeleNum] = useState("");
+  const [regFatherName, setRegFatherName] = useState("");
+  const [regMotherName, setRegMotherName] = useState("");
+  const [regParentName, setRegParentName] = useState("");
+  const [regFatherNum, setRegFatherNum] = useState("");
+  const [regMotherNum, setRegMotherNum] = useState("");
+  const [regParentNum, setRegParentNum] = useState("");
+  const [regVillageName, setRegVillageName] = useState("");
+  const [regHouseNum, setRegHouseNum] = useState("");
+  const [regVillageNum, setRegVillageNum] = useState("");
+  const [regRoad, setRegRoad] = useState("");
+  const [regSubDistrict, setRegSubDistrict] = useState("");
+  const [regDistrict, setRegDistrict] = useState("");
+  const [regProvince, setRegProvince] = useState("");
+  const [regZipcode, setRegZipcode] = useState("");
+  const [regtaughtSubject, setRegTaughtSubject] = useState("");
+
+  const [error, setError] = useState("");
 
   const { logOut, user, firstName, lastName } = useUserAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [open1, setOpen1] = useState(false);
+  const [open2, setOpen2] = useState(false);
+  const [open3, setOpen3] = useState(false);
 
   let menuRef1 = useRef();
   let menuRef2 = useRef();
   let menuRef3 = useRef();
 
   useEffect(() => {
-    const editUserProfile = async () => {
-      try {
-        const queryParams = new URLSearchParams(location.search);
-        const id = queryParams.get("id");
-        setId(id);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    editUserProfile();
-  }, []);
+    const queryParams = new URLSearchParams(location.search);
+    const id = queryParams.get("id");
+    if (id) setProfileID(id);
+  }, [location.search]);
 
   useEffect(() => {
-    if (id) {
-      const unsubscribe = loadRealtime();
-      return () => {
-        unsubscribe();
-      };
-    }
-  }, [id]);
+    if (!profileID) return;
+
+    const unsubscribe = onSnapshot(
+      doc(db, "profile", profileID),
+      (snapshot) => {
+        const newData = snapshot.data();
+        setRegFirstName(newData.firstName);
+        setRegLastName(newData.lastName);
+        setRegPosition(newData.position);
+        setRegReligion(newData.religion);
+        setRegNationality(newData.nationality);
+        setRegBirthday(newData.birthday);
+        setRegTeleNum(newData.teleNum);
+        setRegFatherName(newData.fatherName);
+        setRegMotherName(newData.motherName);
+        setRegParentName(newData.parentName);
+        setRegFatherNum(newData.fatherNum);
+        setRegMotherNum(newData.motherNum);
+        setRegParentNum(newData.parentNum);
+        setRegTaughtSubject(newData.taughtSubject);
+
+        console.log("ProfileData:", newData);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [profileID]);
+
+  useEffect(() => {
+    if (!profileID) return;
+
+    const unsubscribe = onSnapshot(
+      doc(db, "address", profileID),
+      (snapshot) => {
+        const newData = snapshot.data();
+
+        setRegVillageName(newData.villageName);
+        setRegHouseNum(newData.houseNum);
+        setRegVillageNum(newData.villageNum);
+        setRegRoad(newData.road);
+        setRegSubDistrict(newData.subDistrict);
+        setRegDistrict(newData.district);
+        setRegProvince(newData.province);
+        setRegZipcode(newData.zipcode);
+
+        console.log("AddressData:", newData);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [profileID]);
 
   useEffect(() => {
     let handler = (e) => {
@@ -72,18 +132,6 @@ function EditUserProfile() {
     };
   });
 
-  const loadRealtime = () => {
-    const unsubscribe = onSnapshot(doc(db, "profile", id), (snapshot) => {
-      const newData = snapshot.data();
-      setProfileData(newData);
-      setEmail(newData.email);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  };
-
   const handleLogout = async () => {
     try {
       await logOut();
@@ -93,21 +141,47 @@ function EditUserProfile() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
     try {
-      await setDoc(
-        doc(db, "profile", id),
-        {
-          email: email,
-        },
-        { merge: true }
-      );
+      const userProfile = {
+        email: user.email,
+        firstName: regFirstName,
+        lastName: regLastName,
+        religion: regReligion,
+        nationality: regNationality,
+        birthday: regBirthday,
+        teleNum: regTeleNum,
+        fatherName: regFatherName,
+        motherName: regMotherName,
+        parentName: regParentName,
+        fatherNum: regFatherNum,
+        motherNum: regMotherNum,
+        parentNum: regParentNum,
+        taughtSubject: regtaughtSubject,
+      };
+
+      const userAddress = {
+        villageName: regVillageName,
+        houseNum: regHouseNum,
+        villageNum: regVillageNum,
+        road: regRoad,
+        subDistrict: regSubDistrict,
+        district: regDistrict,
+        province: regProvince,
+        zipcode: regZipcode,
+      };
+
+      await setDoc(doc(db, "profile", profileID), userProfile, { merge: true });
+      await setDoc(doc(db, "address", profileID), userAddress, { merge: true });
+
+      console.log("Profile Data updated to FireStore!");
     } catch (err) {
-      console.log(err.message);
+      setError(err.message);
+      console.log(err);
     }
   };
-
-  console.log("prifiledata:", profileData);
 
   return (
     <div className="screen">
@@ -324,19 +398,248 @@ function EditUserProfile() {
           </form>
         </div>
       </div>
-      <div className="d-flex flex-column">
-        <div className="m-1">{}</div>
-        <input
-          className="m-1"
-          type="text"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <button className="m-1" onClick={() => handleSave()}>
+      <Form
+        onSubmit={handleSubmit}
+        className="d-flex flex-column align-items-center p-5 rounded-4 gap-2"
+        style={{ backgroundColor: "aliceblue" }}
+      >
+        <div className="custom-h2 fw-bold">แก้ไขข้อมูลผู้ใช้</div>
+        {error && <Alert variant="danger">{error}</Alert>}
+
+        <div className="d-flex flex-column gap-1" style={{ width: "924px" }}>
+          <div className="custom-h3 fw-bold">ข้อมูลส่วนตัว</div>
+          <div className="d-flex gap-4 w-100">
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>ชื่อ</Form.Label>
+              <Form.Control
+                type="text"
+                value={regFirstName}
+                onChange={(e) => setRegFirstName(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>สกุล</Form.Label>
+              <Form.Control
+                type="text"
+                value={regLastName}
+                onChange={(e) => setRegLastName(e.target.value)}
+              />
+            </Form.Group>
+          </div>
+          <div className="d-flex gap-4" style={{ width: "924px" }}>
+            <Form.Group className="mb-3 w-50" style={{ maxWidth: "450px" }}>
+              <Form.Label>ตำแหน่ง</Form.Label>
+              <Form.Control
+                type="text"
+                value={regPosition}
+                onChange={(e) => setRegPosition(e.target.value)}
+              />
+            </Form.Group>
+            {regPosition === "ครู" && (
+              <select
+                className="text-center w-50 rounded"
+                style={{
+                  backgroundColor: "#BBBBBB",
+                  height: "38px",
+                  marginTop: "32px",
+                }}
+                value={regtaughtSubject}
+                onChange={(e) => setRegTaughtSubject(e.target.value)}
+              >
+                <option value="" disabled>
+                  -- เลือกวิชาที่สอน --
+                </option>
+                <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
+                <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                <option value="ภาษาไทย">ภาษาไทย</option>
+                <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
+                <option value="สังคมศึกษา">สังคมศึกษา</option>
+                <option value="ลูกเสือ-เนตรนารี">ลูกเสือ-เนตรนารี</option>
+              </select>
+            )}
+
+            {regPosition === "นักเรียน" && (
+              <Form.Group className="mb-3 w-50">
+                <Form.Label>ระดับชั้น (เฉพาะนักเรียน)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={regClassLevel}
+                  onChange={(e) => setRegClassLevel(e.target.value)}
+                />
+              </Form.Group>
+            )}
+          </div>
+          <div className="d-flex gap-4" style={{ width: "924px" }}>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>ศาสนา</Form.Label>
+              <Form.Control
+                type="text"
+                value={regReligion}
+                onChange={(e) => setRegReligion(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>สัญชาติ</Form.Label>
+              <Form.Control
+                type="text"
+                value={regNationality}
+                onChange={(e) => setRegNationality(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>วันเกิด</Form.Label>
+              <Form.Control
+                type="text"
+                value={regBirthday}
+                onChange={(e) => setRegBirthday(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>เบอร์โทรศัพท์</Form.Label>
+              <Form.Control
+                type="text"
+                value={regTeleNum}
+                onChange={(e) => setRegTeleNum(e.target.value)}
+              />
+            </Form.Group>
+          </div>
+          <div className="d-flex gap-4" style={{ width: "924px" }}>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>ชื่อบิดา</Form.Label>
+              <Form.Control
+                type="text"
+                value={regFatherName}
+                onChange={(e) => setRegFatherName(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>ชื่อมารดา</Form.Label>
+              <Form.Control
+                type="text"
+                value={regMotherName}
+                onChange={(e) => setRegMotherName(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>ชื่อผู้ปกครอง</Form.Label>
+              <Form.Control
+                type="text"
+                value={regParentName}
+                onChange={(e) => setRegParentName(e.target.value)}
+              />
+            </Form.Group>
+          </div>
+          <div className="d-flex gap-4" style={{ width: "924px" }}>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>เบอร์โทรบิดา</Form.Label>
+              <Form.Control
+                type="text"
+                value={regFatherNum}
+                onChange={(e) => setRegFatherNum(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>เบอร์โทรมารดา</Form.Label>
+              <Form.Control
+                type="text"
+                value={regMotherNum}
+                onChange={(e) => setRegMotherNum(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>เบอร์โทรผู้ปกครอง</Form.Label>
+              <Form.Control
+                type="text"
+                value={regParentNum}
+                onChange={(e) => setRegParentNum(e.target.value)}
+              />
+            </Form.Group>
+          </div>
+        </div>
+
+        <div className="d-flex flex-column gap-1" style={{ width: "924px" }}>
+          <div className="custom-h3 fw-bold">ที่อยู่</div>
+          <div className="d-flex gap-4" style={{ width: "924px" }}>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>ชื่อหมู่บ้าน</Form.Label>
+              <Form.Control
+                type="text"
+                value={regVillageName}
+                onChange={(e) => setRegVillageName(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>บ้านเลขที่</Form.Label>
+              <Form.Control
+                type="text"
+                value={regHouseNum}
+                onChange={(e) => setRegHouseNum(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>หมู่ที่</Form.Label>
+              <Form.Control
+                type="text"
+                value={regVillageNum}
+                onChange={(e) => setRegVillageNum(e.target.value)}
+              />
+            </Form.Group>
+          </div>
+          <div className="d-flex gap-4" style={{ width: "924px" }}>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>ถนน/ตรอก/ซอย</Form.Label>
+              <Form.Control
+                type="text"
+                value={regRoad}
+                onChange={(e) => setRegRoad(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>ตำบล/แขวง</Form.Label>
+              <Form.Control
+                type="text"
+                value={regSubDistrict}
+                onChange={(e) => setRegSubDistrict(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>อำเภอ/เขต</Form.Label>
+              <Form.Control
+                type="text"
+                value={regDistrict}
+                onChange={(e) => setRegDistrict(e.target.value)}
+              />
+            </Form.Group>
+          </div>
+          <div className="d-flex gap-4" style={{ width: "924px" }}>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>จังหวัด</Form.Label>
+              <Form.Control
+                type="text"
+                value={regProvince}
+                onChange={(e) => setRegProvince(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3 w-50">
+              <Form.Label>รหัสไปรษณีย์</Form.Label>
+              <Form.Control
+                type="text"
+                value={regZipcode}
+                onChange={(e) => setRegZipcode(e.target.value)}
+              />
+            </Form.Group>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="save-btn custom-h3 btn rounded-pill border-0 text-light"
+        >
           บันทึก
         </button>
-      </div>
-      <div className="footer position-absolute bottom-0 w-100">
+      </Form>
+
+      <div className="footer">
         <div className="custom-h3">ติดต่อเรา</div>
       </div>
     </div>

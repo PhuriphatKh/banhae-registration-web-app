@@ -347,7 +347,7 @@ function Register() {
       <Form
         onSubmit={handleSubmit}
         className="d-flex flex-column align-items-center p-5 rounded-4 gap-2"
-        style={{ backgroundColor: "aliceblue" }}
+        style={{ backgroundColor: "aliceblue", height: "825px" }}
       >
         <div className="custom-h2 fw-bold">เพิ่มข้อมูลผู้ใช้</div>
         {error && <Alert variant="danger">{error}</Alert>}

@@ -3,10 +3,10 @@ import { Navigate } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 
 function GuestRoute({ children }) {
-  const { user } = useUserAuth();
+  const { user, userRole } = useUserAuth();
 
   if (user) {
-    return <Navigate to="/home" />;
+    return <Navigate to={`/home/${userRole}`} />;
   }
 
   return children;

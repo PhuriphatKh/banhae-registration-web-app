@@ -242,13 +242,13 @@ function AdminHome() {
                   fill="black"
                 />
               </svg>
-              <div className="custom-h5">{firstName} {lastName}</div>
+              <div className="custom-h4">{firstName} {lastName}</div>
               <button
                 className="logout-button"
                 type="button"
                 onClick={handleLogout}
               >
-                <div className="custom-h6">ออกจากระบบ</div>
+                <div className="custom-h5">ออกจากระบบ</div>
               </button>
             </div>
           </form>

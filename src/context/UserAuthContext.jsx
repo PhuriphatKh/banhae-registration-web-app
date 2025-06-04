@@ -25,10 +25,10 @@ export function UserAuthContextProvider({ children }) {
   }
 
   async function signUp(email, password) {
-    const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+    const secondaryApp = await initializeApp(firebaseConfig, "Secondary");
     let newUser = null;
     try {
-      const secondaryAuth = getAuth(secondaryApp);
+      const secondaryAuth = await getAuth(secondaryApp);
       const userCredential = await createUserWithEmailAndPassword(
         secondaryAuth,
         email,

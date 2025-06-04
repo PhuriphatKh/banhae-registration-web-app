@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  use,
   useContext,
   useEffect,
   useState,
@@ -8,8 +7,6 @@ import React, {
 import { db } from "../firebase";
 import {
   doc,
-  getDocs,
-  getDoc,
   collection,
   deleteDoc,
   onSnapshot,
@@ -51,8 +48,6 @@ export function ProfileDataContextProvider({ children }) {
       console.error("Error deleting document: ", error);
     }
   }
-
-  console.log("User Data:", profileData);
 
   return (
     <userProfile.Provider value={{ profileData, userDelete }}>

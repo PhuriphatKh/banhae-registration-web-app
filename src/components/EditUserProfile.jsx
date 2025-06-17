@@ -2,37 +2,103 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
-import { Form, Alert, Button } from "react-bootstrap";
+import {
+  Form,
+  Button,
+  Alert,
+  Container,
+  Row,
+  Col,
+  Modal,
+} from "react-bootstrap";
 import { db } from "../firebase";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import logo from "../assets/logo.png";
 
 function EditUserProfile() {
+  //
   const [profileID, setProfileID] = useState("");
+  //
   const [regFirstName, setRegFirstName] = useState("");
   const [regLastName, setRegLastName] = useState("");
-  const [email, setEmail] = useState("");
   const [regPosition, setRegPosition] = useState("");
-  const [regClassLevel, setRegClassLevel] = useState("-");
-  const [regReligion, setRegReligion] = useState("");
-  const [regNationality, setRegNationality] = useState("");
+  const [regClassLevel, setRegClassLevel] = useState("");
+  const [regtaughtSubject, setRegTaughtSubject] = useState("");
   const [regBirthday, setRegBirthday] = useState("");
-  const [regTeleNum, setRegTeleNum] = useState("");
-  const [regFatherName, setRegFatherName] = useState("");
-  const [regMotherName, setRegMotherName] = useState("");
-  const [regParentName, setRegParentName] = useState("");
-  const [regFatherNum, setRegFatherNum] = useState("");
-  const [regMotherNum, setRegMotherNum] = useState("");
-  const [regParentNum, setRegParentNum] = useState("");
-  const [regVillageName, setRegVillageName] = useState("");
+  const [regAge, setRegAge] = useState(0);
+  const [regBornAt, setRegBornAt] = useState("");
+  const [regNationality, setRegNationality] = useState("");
+  const [regEthnicity, setRegEthnicity] = useState("");
+  const [regReligion, setRegReligion] = useState("");
+  const [regIDCard, setRegIDCard] = useState(0);
+  const [regBirthOrder, setRegBirthOrder] = useState(0);
+  const [regSiblingsCount, setRegSiblingsCount] = useState(0);
+  //
   const [regHouseNum, setRegHouseNum] = useState("");
   const [regVillageNum, setRegVillageNum] = useState("");
+  const [regVillageName, setRegVillageName] = useState("");
   const [regRoad, setRegRoad] = useState("");
   const [regSubDistrict, setRegSubDistrict] = useState("");
   const [regDistrict, setRegDistrict] = useState("");
   const [regProvince, setRegProvince] = useState("");
   const [regZipcode, setRegZipcode] = useState("");
-  const [regtaughtSubject, setRegTaughtSubject] = useState("");
+  const [regTeleNum, setRegTeleNum] = useState("");
+  //
+  const [regFatherName, setRegFatherName] = useState("");
+  const [regOccupation1, setRegOccupation1] = useState("");
+  const [regMonthlyIncome1, setRegMonthlyIncome1] = useState("");
+  const [regHouseNum1, setRegHouseNum1] = useState("");
+  const [regVillageNum1, setRegVillageNum1] = useState("");
+  const [regRoad1, setRegRoad1] = useState("");
+  const [regSubDistrict1, setRegSubDistrict1] = useState("");
+  const [regDistrict1, setRegDistrict1] = useState("");
+  const [regProvince1, setRegProvince1] = useState("");
+  const [regZipcode1, setRegZipcode1] = useState("");
+  const [regFatherNum, setRegFatherNum] = useState("");
+  //
+  const [regMotherName, setRegMotherName] = useState("");
+  const [regOccupation2, setRegOccupation2] = useState("");
+  const [regMonthlyIncome2, setRegMonthlyIncome2] = useState("");
+  const [regHouseNum2, setRegHouseNum2] = useState("");
+  const [regVillageNum2, setRegVillageNum2] = useState("");
+  const [regRoad2, setRegRoad2] = useState("");
+  const [regSubDistrict2, setRegSubDistrict2] = useState("");
+  const [regDistrict2, setRegDistrict2] = useState("");
+  const [regProvince2, setRegProvince2] = useState("");
+  const [regZipcode2, setRegZipcode2] = useState("");
+  const [regMotherNum, setRegMotherNum] = useState("");
+  //
+  const [regParentName, setRegParentName] = useState("");
+  const [regOccupation3, setRegOccupation3] = useState("");
+  const [regMonthlyIncome3, setRegMonthlyIncome3] = useState("");
+  const [regHouseNum3, setRegHouseNum3] = useState("");
+  const [regVillageNum3, setRegVillageNum3] = useState("");
+  const [regRoad3, setRegRoad3] = useState("");
+  const [regSubDistrict3, setRegSubDistrict3] = useState("");
+  const [regDistrict3, setRegDistrict3] = useState("");
+  const [regProvince3, setRegProvince3] = useState("");
+  const [regZipcode3, setRegZipcode3] = useState("");
+  const [regParentNum, setRegParentNum] = useState("");
+  //
+
+  const [provinces, setProvinces] = useState([]);
+  const [amphures, setAmphures] = useState([]);
+  const [districts, setDistricts] = useState([]);
+
+  const [provinces1, setProvinces1] = useState([]);
+  const [amphures1, setAmphures1] = useState([]);
+  const [districts1, setDistricts1] = useState([]);
+
+  const [regBirthProvinceID, setBirthProvinceID] = useState("");
+  const [regBirthDistrictID, setBirthDistrictID] = useState("");
+  const [regBirthSubDistrictID, setBirthSubDistrictID] = useState("");
+
+  const [regBirthProvince, setBirthProvince] = useState("");
+  const [regBirthDistrict, setBirthDistrict] = useState("");
+  const [regBirthSubDistrict, setBirthSubDistrict] = useState("");
+
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({});
 
   const [error, setError] = useState("");
 
@@ -43,10 +109,16 @@ function EditUserProfile() {
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
+  const [open4, setOpen4] = useState(false);
+  const [open5, setOpen5] = useState(false);
+  const [open6, setOpen6] = useState(false);
 
   let menuRef1 = useRef();
   let menuRef2 = useRef();
   let menuRef3 = useRef();
+  let menuRef4 = useRef();
+  let menuRef5 = useRef();
+  let menuRef6 = useRef();
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -61,20 +133,23 @@ function EditUserProfile() {
       doc(db, "profile", profileID),
       (snapshot) => {
         const newData = snapshot.data();
-        setRegFirstName(newData.firstName);
-        setRegLastName(newData.lastName);
-        setRegPosition(newData.position);
-        setRegReligion(newData.religion);
-        setRegNationality(newData.nationality);
-        setRegBirthday(newData.birthday);
-        setRegTeleNum(newData.teleNum);
-        setRegFatherName(newData.fatherName);
-        setRegMotherName(newData.motherName);
-        setRegParentName(newData.parentName);
-        setRegFatherNum(newData.fatherNum);
-        setRegMotherNum(newData.motherNum);
-        setRegParentNum(newData.parentNum);
-        setRegTaughtSubject(newData.taughtSubject);
+        if (!newData) return; // ✅ ป้องกัน error
+
+        setRegFirstName(newData.firstName || "");
+        setRegLastName(newData.lastName || "");
+        setRegPosition(newData.position || "");
+        setRegClassLevel(newData.classLevel || "");
+        setRegReligion(newData.religion || "");
+        setRegNationality(newData.nationality || "");
+        setRegBirthday(newData.birthday || "");
+        setRegTeleNum(newData.teleNum || "");
+        setRegFatherName(newData.fatherName || "");
+        setRegMotherName(newData.motherName || "");
+        setRegParentName(newData.parentName || "");
+        setRegFatherNum(newData.fatherNum || "");
+        setRegMotherNum(newData.motherNum || "");
+        setRegParentNum(newData.parentNum || "");
+        setRegTaughtSubject(newData.taughtSubject || "");
 
         console.log("ProfileData:", newData);
       }
@@ -90,15 +165,16 @@ function EditUserProfile() {
       doc(db, "address", profileID),
       (snapshot) => {
         const newData = snapshot.data();
+        if (!newData) return; // ✅ ป้องกัน error
 
-        setRegVillageName(newData.villageName);
-        setRegHouseNum(newData.houseNum);
-        setRegVillageNum(newData.villageNum);
-        setRegRoad(newData.road);
-        setRegSubDistrict(newData.subDistrict);
-        setRegDistrict(newData.district);
-        setRegProvince(newData.province);
-        setRegZipcode(newData.zipcode);
+        setRegVillageName(newData.villageName || "");
+        setRegHouseNum(newData.houseNum || "");
+        setRegVillageNum(newData.villageNum || "");
+        setRegRoad(newData.road || "");
+        setRegSubDistrict(newData.subDistrict || "");
+        setRegDistrict(newData.district || "");
+        setRegProvince(newData.province || "");
+        setRegZipcode(newData.zipcode || "");
 
         console.log("AddressData:", newData);
       }
@@ -107,21 +183,157 @@ function EditUserProfile() {
     return () => unsubscribe();
   }, [profileID]);
 
+  // ที่อยู่ ---------------------------------------------------- //
+  useEffect(() => {
+    fetch(
+      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json"
+    )
+      .then((res) => res.json())
+      .then(setProvinces);
+  }, []);
+
+  useEffect(() => {
+    if (!regProvince) return;
+    fetch(
+      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json"
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const filtered = data.filter(
+          (a) => a.province_id === parseInt(regProvince)
+        );
+        setAmphures(filtered);
+        // setRegDistrict(""); // reset
+        // setRegSubDistrict(""); // reset
+      });
+  }, [regProvince]);
+
+  useEffect(() => {
+    if (!regDistrict) return;
+    fetch(
+      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const filtered = data.filter(
+          (d) => d.amphure_id === parseInt(regDistrict)
+        );
+        setDistricts(filtered);
+        // setRegSubDistrict(""); // reset
+      });
+  }, [regDistrict]);
+
+  useEffect(() => {
+    if (!regSubDistrict) return;
+    fetch(
+      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const selectedSubDistrict = data.find(
+          (d) => d.id === parseInt(regSubDistrict)
+        );
+        if (selectedSubDistrict) {
+          setRegZipcode(selectedSubDistrict.zip_code); // กำหนดรหัสไปรษณีย์
+        }
+      });
+  }, [regSubDistrict]);
+  // ---------------------------------------------------------------- //
+
+  // ที่อยู่เกิด ---------------------------------------------------- //
+  useEffect(() => {
+    fetch(
+      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json"
+    )
+      .then((res) => res.json())
+      .then(setProvinces1);
+  }, []);
+
+  useEffect(() => {
+    if (!regBirthProvinceID) return;
+    fetch(
+      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json"
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const filtered = data.filter(
+          (a) => a.province_id === parseInt(regBirthProvinceID)
+        );
+        setAmphures1(filtered);
+        // setRegDistrict(""); // reset
+        // setRegSubDistrict(""); // reset
+      });
+  }, [regBirthProvinceID]);
+
+  useEffect(() => {
+    if (!regBirthDistrictID) return;
+    fetch(
+      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const filtered = data.filter(
+          (d) => d.amphure_id === parseInt(regBirthDistrictID)
+        );
+        setDistricts1(filtered);
+        // setRegSubDistrict(""); // reset
+      });
+  }, [regBirthDistrictID]);
+
+  useEffect(() => {
+    const province = provinces1.find(
+      (a) => a.id === parseInt(regBirthProvinceID)
+    );
+    if (province) {
+      setBirthProvince("จังหวัด" + province.name_th);
+    }
+
+    const district = amphures1.find(
+      (a) => a.id === parseInt(regBirthDistrictID)
+    );
+    if (district) {
+      setBirthDistrict(district.name_th);
+    }
+
+    const subdistrict = districts1.find(
+      (a) => a.id === parseInt(regBirthSubDistrictID)
+    );
+    if (subdistrict) {
+      setBirthSubDistrict(subdistrict.name_th);
+    }
+  }, [regBirthProvinceID, regBirthDistrictID, regBirthSubDistrictID]);
+
+  useEffect(() => {
+    setRegBornAt(
+      regBirthSubDistrict + " " + regBirthDistrict + " " + regBirthProvince
+    );
+  });
+  // ---------------------------------------------------------------- //
+
   useEffect(() => {
     let handler = (e) => {
       if (!menuRef1.current.contains(e.target)) {
         setOpen1(false);
-        console.log(menuRef1.current);
       }
 
       if (!menuRef2.current.contains(e.target)) {
         setOpen2(false);
-        console.log(menuRef2.current);
       }
 
       if (!menuRef3.current.contains(e.target)) {
         setOpen3(false);
-        console.log(menuRef3.current);
+      }
+
+      if (!menuRef4.current.contains(e.target)) {
+        setOpen4(false);
+      }
+
+      if (!menuRef5.current.contains(e.target)) {
+        setOpen5(false);
+      }
+
+      if (!menuRef6.current.contains(e.target)) {
+        setOpen6(false);
       }
     };
 
@@ -143,45 +355,105 @@ function EditUserProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError(""); // รีเซ็ตข้อผิดพลาด
+
     try {
+      // ข้อมูลผู้ใช้
       const userProfile = {
-        email: user.email,
         firstName: regFirstName,
         lastName: regLastName,
-        religion: regReligion,
-        nationality: regNationality,
-        birthday: regBirthday,
-        teleNum: regTeleNum,
-        fatherName: regFatherName,
-        motherName: regMotherName,
-        parentName: regParentName,
-        fatherNum: regFatherNum,
-        motherNum: regMotherNum,
-        parentNum: regParentNum,
+        position: regPosition,
+        classLevel: regClassLevel, 
         taughtSubject: regtaughtSubject,
+        birthday: regBirthday,
+        age: regAge,
+        bornAt: regBornAt,
+        nationality: regNationality,
+        ethnicity: regEthnicity,
+        religion: regReligion,
+        idCard: regIDCard,
+        birthOrder: regBirthOrder,
+        siblingsCount: regSiblingsCount,
       };
 
+      // ข้อมูลที่อยู่ของผู้ใช้, พ่อ, แม่, และผู้ปกครอง
       const userAddress = {
-        villageName: regVillageName,
-        houseNum: regHouseNum,
-        villageNum: regVillageNum,
-        road: regRoad,
-        subDistrict: regSubDistrict,
-        district: regDistrict,
-        province: regProvince,
-        zipcode: regZipcode,
+        user: {
+          houseNum: regHouseNum,
+          villageNum: regVillageNum,
+          villageName: regVillageName,
+          road: regRoad,
+          subDistrict: regSubDistrict,
+          district: regDistrict,
+          province: regProvince,
+          zipcode: regZipcode,
+          teleNum: regTeleNum,
+        },
+        father: {
+          houseNum: regHouseNum1,
+          villageNum: regVillageNum1,
+          road: regRoad1,
+          subDistrict: regSubDistrict1,
+          district: regDistrict1,
+          province: regProvince1,
+          zipcode: regZipcode1,
+          fatherNum: regFatherNum,
+        },
+        mother: {
+          houseNum: regHouseNum2,
+          villageNum: regVillageNum2,
+          road: regRoad2,
+          subDistrict: regSubDistrict2,
+          district: regDistrict2,
+          province: regProvince2,
+          zipcode: regZipcode2,
+          motherNum: regMotherNum,
+        },
+        parent: {
+          houseNum: regHouseNum3,
+          villageNum: regVillageNum3,
+          road: regRoad3,
+          subDistrict: regSubDistrict3,
+          district: regDistrict3,
+          province: regProvince3,
+          zipcode: regZipcode3,
+          parentNum: regParentNum,
+        },
       };
 
-      await setDoc(doc(db, "profile", profileID), userProfile, { merge: true });
-      await setDoc(doc(db, "address", profileID), userAddress, { merge: true });
+      setFormData(userProfile);
 
-      console.log("Profile Data updated to FireStore!");
+      setShowModal(true);
+
+      // บันทึกข้อมูลโปรไฟล์ลง Firestore
+      // await setDoc(doc(db, "profile", profileID), userProfile, { merge: true });
+      // บันทึกข้อมูลที่อยู่ของผู้ใช้ลง Firestore
+      // await setDoc(doc(db, "address", profileID), userAddress, { merge: true });
+
+      // console.log("Data updated successfully in Firestore!");
     } catch (err) {
       setError(err.message);
       console.log(err);
     }
   };
+
+  const handleConfirmSave = async () => {
+  try {
+    // บันทึกข้อมูลใน Firestore
+    await setDoc(doc(db, "profile", profileID), formData, { merge: true });
+    console.log("Data saved successfully!");
+    
+    // ปิด Modal หลังจากบันทึกข้อมูล
+    setShowModal(false);
+  } catch (err) {
+    setError(err.message);
+    console.log(err);
+  }
+};
+
+const handleCloseModal = () => {
+  setShowModal(false);
+};
 
   return (
     <div className="screen">
@@ -203,441 +475,776 @@ function EditUserProfile() {
         </div>
 
         <div className="menu-container">
-          <div ref={menuRef2}>
-            <div
-              className="menu-1"
-              onClick={() => {
-                setOpen2(!open2);
-              }}
-            >
+          {/* เมนู ทะเบียน */}
+          <div className="dropdown" ref={menuRef2}>
+            <div className="dropdown-trigger" onClick={() => setOpen2(!open2)}>
               <div className="custom-h5">ทะเบียน</div>
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="25"
-                height="24"
-                viewBox="0 0 25 24"
-                fill="none"
-              >
-                <g clipPath="url(#clip0_282_2287)">
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M13.5599 16.06C13.2787 16.3409 12.8974 16.4987 12.4999 16.4987C12.1024 16.4987 11.7212 16.3409 11.4399 16.06L5.7819 10.404C5.50064 10.1226 5.34268 9.74101 5.34277 9.34315C5.34287 8.94529 5.50101 8.56377 5.7824 8.2825C6.06379 8.00124 6.4454 7.84328 6.84325 7.84338C7.24111 7.84347 7.62264 8.00161 7.9039 8.283L12.4999 12.879L17.0959 8.283C17.3787 8.00963 17.7575 7.85826 18.1508 7.86149C18.5441 7.86472 18.9204 8.0223 19.1986 8.30028C19.4769 8.57826 19.6348 8.95441 19.6384 9.3477C19.642 9.741 19.491 10.12 19.2179 10.403L13.5609 16.061L13.5599 16.06Z"
-                    fill="black"
-                  />
-                </g>
-                <defs>
-                  <clipPath id="clip0_282_2287">
-                    <rect
-                      width="24"
-                      height="24"
-                      fill="white"
-                      transform="translate(0.5)"
-                    />
-                  </clipPath>
-                </defs>
-              </svg>
-            </div>
-            <div className={`menu-1-dropdown ${open2 ? "active" : "inactive"}`}>
-              <div className="custom-h5 d-flex flex-column align-items-end">
-                <Link to={"/profile"} className="text-black">
-                  ข้อมูลส่วนตัว
-                </Link>
-                <Link to={"/usermanagement"} className="text-black">
-                  จัดการข้อมูลผู้ใช้
-                </Link>
-                <Link to={"/student-table-management"} className="text-black">
-                  จัดการตารางเรียน
-                </Link>
-                <Link to={"/teacher-table-management"} className="text-black">
-                  จัดการตารางสอน
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div ref={menuRef3}>
-            <div
-              className="menu-2"
-              onClick={() => {
-                setOpen3(!open3);
-              }}
-            >
-              <div className="custom-h5">ประมวณผลการเรียน</div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="25"
-                height="24"
-                viewBox="0 0 25 24"
-                fill="none"
-              >
-                <g clipPath="url(#clip0_282_2287)">
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M13.5599 16.06C13.2787 16.3409 12.8974 16.4987 12.4999 16.4987C12.1024 16.4987 11.7212 16.3409 11.4399 16.06L5.7819 10.404C5.50064 10.1226 5.34268 9.74101 5.34277 9.34315C5.34287 8.94529 5.50101 8.56377 5.7824 8.2825C6.06379 8.00124 6.4454 7.84328 6.84325 7.84338C7.24111 7.84347 7.62264 8.00161 7.9039 8.283L12.4999 12.879L17.0959 8.283C17.3787 8.00963 17.7575 7.85826 18.1508 7.86149C18.5441 7.86472 18.9204 8.0223 19.1986 8.30028C19.4769 8.57826 19.6348 8.95441 19.6384 9.3477C19.642 9.741 19.491 10.12 19.2179 10.403L13.5609 16.061L13.5599 16.06Z"
-                    fill="black"
-                  />
-                </g>
-                <defs>
-                  <clipPath id="clip0_282_2287">
-                    <rect
-                      width="24"
-                      height="24"
-                      fill="white"
-                      transform="translate(0.5)"
-                    />
-                  </clipPath>
-                </defs>
-              </svg>
-            </div>
-            <div
-              className={`menu-2-dropdown ${
-                open3 ? "active" : "inactive"
-              } d-flex justify-content-end align-items-center`}
-            >
-              <div className="custom-h5">
-                <Link to="/school-record-management" className="text-black">
-                  จัดการผลการเรียน
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="menu-3">
-            <div className="custom-h5">คำร้อง</div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="25"
-              height="24"
-              viewBox="0 0 25 24"
-              fill="none"
-            >
-              <g clipPath="url(#clip0_282_2287)">
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M13.5599 16.06C13.2787 16.3409 12.8974 16.4987 12.4999 16.4987C12.1024 16.4987 11.7212 16.3409 11.4399 16.06L5.7819 10.404C5.50064 10.1226 5.34268 9.74101 5.34277 9.34315C5.34287 8.94529 5.50101 8.56377 5.7824 8.2825C6.06379 8.00124 6.4454 7.84328 6.84325 7.84338C7.24111 7.84347 7.62264 8.00161 7.9039 8.283L12.4999 12.879L17.0959 8.283C17.3787 8.00963 17.7575 7.85826 18.1508 7.86149C18.5441 7.86472 18.9204 8.0223 19.1986 8.30028C19.4769 8.57826 19.6348 8.95441 19.6384 9.3477C19.642 9.741 19.491 10.12 19.2179 10.403L13.5609 16.061L13.5599 16.06Z"
-                  fill="black"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_282_2287">
-                  <rect
-                    width="24"
-                    height="24"
-                    fill="white"
-                    transform="translate(0.5)"
-                  />
-                </clipPath>
-              </defs>
-            </svg>
-          </div>
-        </div>
-
-        <div className="dropdown-container" ref={menuRef1}>
-          <div
-            className="dropdown-trigger"
-            onClick={() => {
-              setOpen1(!open1);
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="17"
-              height="21"
-              viewBox="0 0 17 21"
-              fill="none"
-            >
-              <g clipPath="url(#clip0_1_313)">
-                <path
-                  d="M0.5 21C0.5 18.8783 1.34285 16.8434 2.84315 15.3431C4.34344 13.8429 6.37827 13 8.5 13C10.6217 13 12.6566 13.8429 14.1569 15.3431C15.6571 16.8434 16.5 18.8783 16.5 21H0.5ZM8.5 12C5.185 12 2.5 9.315 2.5 6C2.5 2.685 5.185 0 8.5 0C11.815 0 14.5 2.685 14.5 6C14.5 9.315 11.815 12 8.5 12Z"
-                  fill="black"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_1_313">
-                  <rect
-                    width="16"
-                    height="21"
-                    fill="white"
-                    transform="translate(0.5)"
-                  />
-                </clipPath>
-              </defs>
-            </svg>
-
-            <div className="custom-h5">{firstName}</div>
-          </div>
-
-          <form>
-            <div className={`dropdown-menu-2 ${open1 ? "active" : "inactive"}`}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
+                className={`dropdown-icon ${open2 ? "rotate" : ""}`}
                 width="24"
                 height="24"
                 viewBox="0 0 24 24"
-                fill="none"
               >
-                <path
-                  d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                  fill="black"
-                />
+                <path d="M7 10l5 5 5-5H7z" />
               </svg>
-              <div className="custom-h5">
-                {firstName} {lastName}
-              </div>
-              <button
-                className="logout-button"
-                type="button"
-                onClick={handleLogout}
-              >
-                <div className="custom-h6">ออกจากระบบ</div>
-              </button>
             </div>
-          </form>
+            <div
+              className={`dropdown-content ${open2 ? "active" : "inactive"}`}
+            >
+              <Link to="/profile">ข้อมูลส่วนตัว</Link>
+              <Link to="/usermanagement">จัดการข้อมูลผู้ใช้</Link>
+              <Link to="/subjects-management">จัดการรายวิชา</Link>
+              <Link to="/time-table-management">จัดการตารางเวลา</Link>
+              <Link to="/student-table-management">จัดการตารางเรียน</Link>
+              <Link to="/teacher-table-management">จัดการตารางสอน</Link>
+            </div>
+          </div>
+
+          {/* เมนู ประมวลผล */}
+          <div className="dropdown" ref={menuRef3}>
+            <div className="dropdown-trigger" onClick={() => setOpen3(!open3)}>
+              <div className="custom-h5">ประมวลผลการเรียน</div>
+              <svg
+                className={`dropdown-icon ${open3 ? "rotate" : ""}`}
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+              >
+                <path d="M7 10l5 5 5-5H7z" />
+              </svg>
+            </div>
+            <div
+              className={`dropdown-content ${open3 ? "active" : "inactive"}`}
+            >
+              <Link to="/school-record-management">จัดการผลการเรียน</Link>
+            </div>
+          </div>
+
+          {/* เมนู คำร้อง */}
+          <div className="dropdown">
+            <div className="dropdown-trigger">
+              <div className="custom-h5">คำร้อง</div>
+              <svg
+                className="dropdown-icon"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+              >
+                <path d="M7 10l5 5 5-5H7z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* โปรไฟล์ */}
+        <div className="dropdown-container" ref={menuRef1}>
+          <div className="dropdown-trigger" onClick={() => setOpen1(!open1)}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
+                fill="black"
+              />
+            </svg>
+            <div className="custom-h5">{firstName}</div>
+          </div>
+          <div className={`dropdown-menu-2 ${open1 ? "active" : "inactive"}`}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
+                fill="black"
+              />
+            </svg>
+            <div className="custom-h4">
+              {firstName} {lastName}
+            </div>
+            <button
+              className="logout-button"
+              type="button"
+              onClick={handleLogout}
+            >
+              <div className="custom-h5">ออกจากระบบ</div>
+            </button>
+          </div>
         </div>
       </div>
-      <Form
-        onSubmit={handleSubmit}
-        className="d-flex flex-column align-items-center p-5 rounded-4 gap-2"
-        style={{ backgroundColor: "aliceblue" }}
-      >
-        <div className="custom-h2 fw-bold">แก้ไขข้อมูลผู้ใช้</div>
+
+      <Form onSubmit={handleSubmit} className="bg-light p-5 rounded-4 shadow">
+        <h2 className="text-center fw-bold mb-4">แก้ไขข้อมูลผู้ใช้</h2>
         {error && <Alert variant="danger">{error}</Alert>}
 
-        <div className="d-flex flex-column gap-1" style={{ width: "924px" }}>
-          <div className="custom-h3 fw-bold">ข้อมูลส่วนตัว</div>
-          <div className="d-flex gap-4 w-100">
-            <Form.Group className="mb-3 w-50">
+        {/* ข้อมูลส่วนตัว */}
+        <section>
+          <h4 className="fw-bold">ข้อมูลส่วนตัว</h4>
+          <Row className="mb-3">
+            <Col md={6}>
               <Form.Label>ชื่อ</Form.Label>
               <Form.Control
-                type="text"
                 value={regFirstName}
                 onChange={(e) => setRegFirstName(e.target.value)}
               />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
+            </Col>
+            <Col md={6}>
               <Form.Label>สกุล</Form.Label>
               <Form.Control
-                type="text"
                 value={regLastName}
                 onChange={(e) => setRegLastName(e.target.value)}
               />
-            </Form.Group>
-          </div>
-          <div className="d-flex gap-4" style={{ width: "924px" }}>
-            <Form.Group className="mb-3 w-50" style={{ maxWidth: "450px" }}>
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={6}>
               <Form.Label>ตำแหน่ง</Form.Label>
               <Form.Control
-                type="text"
                 value={regPosition}
                 onChange={(e) => setRegPosition(e.target.value)}
+                disabled
               />
-            </Form.Group>
-            {regPosition === "ครู" && (
-              <select
-                className="text-center w-50 rounded"
-                style={{
-                  backgroundColor: "#BBBBBB",
-                  height: "38px",
-                  marginTop: "32px",
-                }}
-                value={regtaughtSubject}
-                onChange={(e) => setRegTaughtSubject(e.target.value)}
-              >
-                <option value="" disabled>
-                  -- เลือกวิชาที่สอน --
-                </option>
-                <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                <option value="ภาษาไทย">ภาษาไทย</option>
-                <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                <option value="สังคมศึกษา">สังคมศึกษา</option>
-                <option value="ลูกเสือ-เนตรนารี">ลูกเสือ-เนตรนารี</option>
-              </select>
-            )}
-
-            {regPosition === "นักเรียน" && (
-              <Form.Group className="mb-3 w-50">
-                <Form.Label>ระดับชั้น (เฉพาะนักเรียน)</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={regClassLevel}
-                  onChange={(e) => setRegClassLevel(e.target.value)}
-                />
-              </Form.Group>
-            )}
-          </div>
-          <div className="d-flex gap-4" style={{ width: "924px" }}>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>ศาสนา</Form.Label>
-              <Form.Control
-                type="text"
-                value={regReligion}
-                onChange={(e) => setRegReligion(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>สัญชาติ</Form.Label>
-              <Form.Control
-                type="text"
-                value={regNationality}
-                onChange={(e) => setRegNationality(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
+            </Col>
+            <Col md={6}>
+              {regPosition === "ครู" && (
+                <>
+                  <Form.Label>วิชาที่สอน</Form.Label>
+                  <Form.Select
+                    value={regtaughtSubject}
+                    onChange={(e) => setRegTaughtSubject(e.target.value)}
+                  >
+                    <option value="" disabled>
+                      -- เลือกวิชาที่สอน --
+                    </option>
+                    <option>วิทยาศาสตร์</option>
+                    <option>คณิตศาสตร์</option>
+                    <option>ภาษาไทย</option>
+                    <option>ภาษาอังกฤษ</option>
+                    <option>สังคมศึกษา</option>
+                    <option>ลูกเสือ-เนตรนารี</option>
+                  </Form.Select>
+                </>
+              )}
+              {regPosition === "นักเรียน" && (
+                <>
+                  <Form.Label>ระดับชั้น</Form.Label>
+                  <Form.Control
+                    value={regClassLevel}
+                    onChange={(e) => setRegClassLevel(e.target.value)}
+                    disabled
+                  />
+                </>
+              )}
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={3}>
               <Form.Label>วันเกิด</Form.Label>
               <Form.Control
-                type="text"
+                type="date"
                 value={regBirthday}
                 onChange={(e) => setRegBirthday(e.target.value)}
               />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>เบอร์โทรศัพท์</Form.Label>
+            </Col>
+            <Col md={3}>
+              <Form.Label>อายุ</Form.Label>
+              <Form.Control disabled />
+            </Col>
+            <Col md={6} className="position-relative">
+              <Form.Label>เกิดที่</Form.Label>
               <Form.Control
-                type="text"
-                value={regTeleNum}
-                onChange={(e) => setRegTeleNum(e.target.value)}
+                value={regBornAt}
+                onClick={() => setOpen4(!open4)}
+                readOnly
               />
-            </Form.Group>
-          </div>
-          <div className="d-flex gap-4" style={{ width: "924px" }}>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>ชื่อบิดา</Form.Label>
+              <div
+                ref={menuRef4}
+                className={`birth-address-1 ${open4 ? "active" : "inactive"}`}
+              >
+                {provinces1.map((p) => (
+                  <option
+                    key={p.id}
+                    value={p.id}
+                    onClick={(e) => {
+                      setOpen5(!open5), setBirthProvinceID(e.target.value);
+                    }}
+                  >
+                    {p.name_th}
+                  </option>
+                ))}
+              </div>
+              <div
+                ref={menuRef5}
+                className={`birth-address-2 ${open5 ? "active" : "inactive"}`}
+              >
+                {amphures1.map((a) => (
+                  <option
+                    key={a.id}
+                    value={a.id}
+                    onClick={(e) => {
+                      setOpen6(!open6), setBirthDistrictID(e.target.value);
+                    }}
+                  >
+                    {a.name_th}
+                  </option>
+                ))}
+              </div>
+              <div
+                ref={menuRef6}
+                className={`birth-address-3 ${open6 ? "active" : "inactive"}`}
+              >
+                {districts1.map((d) => (
+                  <option
+                    key={d.id}
+                    value={d.id}
+                    onClick={(e) => {
+                      setOpen6(!open6), setBirthSubDistrictID(e.target.value);
+                    }}
+                  >
+                    {d.name_th}
+                  </option>
+                ))}
+              </div>
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={3}>
+              <Form.Label>เชื้อชาติ</Form.Label>
               <Form.Control
-                type="text"
-                value={regFatherName}
-                onChange={(e) => setRegFatherName(e.target.value)}
+                value={regEthnicity}
+                onChange={(e) => setRegEthnicity(e.target.value)}
               />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>ชื่อมารดา</Form.Label>
+            </Col>
+            <Col md={3}>
+              <Form.Label>สัญชาติ</Form.Label>
               <Form.Control
-                type="text"
-                value={regMotherName}
-                onChange={(e) => setRegMotherName(e.target.value)}
+                value={regNationality}
+                onChange={(e) => setRegNationality(e.target.value)}
               />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>ชื่อผู้ปกครอง</Form.Label>
+            </Col>
+            <Col md={3}>
+              <Form.Label>ศาสนา</Form.Label>
               <Form.Control
-                type="text"
-                value={regParentName}
-                onChange={(e) => setRegParentName(e.target.value)}
+                value={regReligion}
+                onChange={(e) => setRegReligion(e.target.value)}
               />
-            </Form.Group>
-          </div>
-          <div className="d-flex gap-4" style={{ width: "924px" }}>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>เบอร์โทรบิดา</Form.Label>
+            </Col>
+            <Col md={3}>
+              <Form.Label>เลขบัตรประจำตัวประชาชน</Form.Label>
               <Form.Control
-                type="text"
-                value={regFatherNum}
-                onChange={(e) => setRegFatherNum(e.target.value)}
+                value={regIDCard}
+                onChange={(e) => setRegIDCard(e.target.value)}
+                type="number"
               />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>เบอร์โทรมารดา</Form.Label>
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={3}>
+              <Form.Label>เป็นบุตรคนที่</Form.Label>
               <Form.Control
-                type="text"
-                value={regMotherNum}
-                onChange={(e) => setRegMotherNum(e.target.value)}
+                value={regBirthOrder}
+                onChange={(e) => setRegBirthOrder(e.target.value)}
+                type="number"
               />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>เบอร์โทรผู้ปกครอง</Form.Label>
+            </Col>
+            <Col md={3}>
+              <Form.Label>มีพี่น้อง</Form.Label>
               <Form.Control
-                type="text"
-                value={regParentNum}
-                onChange={(e) => setRegParentNum(e.target.value)}
+                value={regSiblingsCount}
+                onChange={(e) => setRegSiblingsCount(e.target.value)}
+                type="number"
               />
-            </Form.Group>
-          </div>
-        </div>
+            </Col>
+          </Row>
+        </section>
 
-        <div className="d-flex flex-column gap-1" style={{ width: "924px" }}>
-          <div className="custom-h3 fw-bold">ที่อยู่</div>
-          <div className="d-flex gap-4" style={{ width: "924px" }}>
-            <Form.Group className="mb-3 w-50">
-              <Form.Label>ชื่อหมู่บ้าน</Form.Label>
-              <Form.Control
-                type="text"
-                value={regVillageName}
-                onChange={(e) => setRegVillageName(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
+        {/* ที่อยู่ */}
+        <section>
+          <h4 className="fw-bold mt-4">ที่อยู่ปัจจุบัน</h4>
+          <Row className="mb-3">
+            <Col md={4}>
               <Form.Label>บ้านเลขที่</Form.Label>
               <Form.Control
-                type="text"
                 value={regHouseNum}
                 onChange={(e) => setRegHouseNum(e.target.value)}
               />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
+            </Col>
+            <Col md={4}>
               <Form.Label>หมู่ที่</Form.Label>
               <Form.Control
-                type="text"
                 value={regVillageNum}
                 onChange={(e) => setRegVillageNum(e.target.value)}
               />
-            </Form.Group>
-          </div>
-          <div className="d-flex gap-4" style={{ width: "924px" }}>
-            <Form.Group className="mb-3 w-50">
+            </Col>
+            <Col md={4}>
+              <Form.Label>ชื่อหมู่บ้าน</Form.Label>
+              <Form.Control
+                value={regVillageName}
+                onChange={(e) => setRegVillageName(e.target.value)}
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={4}>
               <Form.Label>ถนน/ตรอก/ซอย</Form.Label>
               <Form.Control
-                type="text"
                 value={regRoad}
                 onChange={(e) => setRegRoad(e.target.value)}
               />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
+            </Col>
+            <Col md={4}>
               <Form.Label>ตำบล/แขวง</Form.Label>
-              <Form.Control
-                type="text"
+              <Form.Select
                 value={regSubDistrict}
                 onChange={(e) => setRegSubDistrict(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
+                disabled={!regDistrict}
+              >
+                <option value="">-- เลือกตำบล --</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col md={4}>
               <Form.Label>อำเภอ/เขต</Form.Label>
-              <Form.Control
-                type="text"
+              <Form.Select
                 value={regDistrict}
                 onChange={(e) => setRegDistrict(e.target.value)}
-              />
-            </Form.Group>
-          </div>
-          <div className="d-flex gap-4" style={{ width: "924px" }}>
-            <Form.Group className="mb-3 w-50">
+                disabled={!regProvince}
+              >
+                <option value="">-- เลือกอำเภอ --</option>
+                {amphures.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={4}>
               <Form.Label>จังหวัด</Form.Label>
-              <Form.Control
-                type="text"
+              <Form.Select
                 value={regProvince}
                 onChange={(e) => setRegProvince(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 w-50">
+              >
+                <option value="">-- เลือกจังหวัด --</option>
+                {provinces.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col md={4}>
               <Form.Label>รหัสไปรษณีย์</Form.Label>
               <Form.Control
-                type="text"
                 value={regZipcode}
                 onChange={(e) => setRegZipcode(e.target.value)}
+                disabled
               />
-            </Form.Group>
-          </div>
-        </div>
+            </Col>
+            <Col md={4}>
+              <Form.Label>เบอร์โทร</Form.Label>
+              <Form.Control
+                type="tele"
+                value={regTeleNum}
+                onChange={(e) => setRegTeleNum(e.target.value)}
+              />
+            </Col>
+          </Row>
+        </section>
 
-        <button
-          type="submit"
-          className="save-btn custom-h3 btn rounded-pill border-0 text-light"
-        >
-          บันทึก
-        </button>
+        {/* ข้อมูลครอบครัว */}
+        <section>
+          <h4 className="fw-bold mt-4">ข้อมูลครอบครัว</h4>
+          <Row className="mb-3">
+            <Col md={6}>
+              <Form.Label className="fw-bold">ชื่อบิดา</Form.Label>
+              <Form.Control
+                value={regFatherName}
+                onChange={(e) => setRegFatherName(e.target.value)}
+              />
+            </Col>
+            <Col md={3}>
+              <Form.Label>อาชีพ</Form.Label>
+              <Form.Control
+                value={regOccupation1}
+                onChange={(e) => setRegOccupation1(e.target.value)}
+              />
+            </Col>
+            <Col md={3}>
+              <Form.Label>รายได้ / เดือน</Form.Label>
+              <Form.Control
+                value={regMonthlyIncome1}
+                onChange={(e) => setRegMonthlyIncome1(e.target.value)}
+                type="number"
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={4}>
+              <Form.Label>บ้านเลขที่</Form.Label>
+              <Form.Control
+                value={regHouseNum1}
+                onChange={(e) => setRegHouseNum1(e.target.value)}
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>หมู่ที่</Form.Label>
+              <Form.Control
+                value={regVillageNum1}
+                onChange={(e) => setRegVillageNum1(e.target.value)}
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>ถนน/ตรอก/ซอย</Form.Label>
+              <Form.Control
+                value={regRoad1}
+                onChange={(e) => setRegRoad1(e.target.value)}
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={4}>
+              <Form.Label>ตำบล/แขวง</Form.Label>
+              <Form.Select
+                value={regSubDistrict1}
+                onChange={(e) => setRegSubDistrict1(e.target.value)}
+                disabled={!regDistrict}
+              >
+                <option value="">-- เลือกตำบล --</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col md={4}>
+              <Form.Label>อำเภอ/เขต</Form.Label>
+              <Form.Select
+                value={regDistrict1}
+                onChange={(e) => setRegDistrict1(e.target.value)}
+                disabled={!regProvince}
+              >
+                <option value="">-- เลือกอำเภอ --</option>
+                {amphures.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col md={4}>
+              <Form.Label>จังหวัด</Form.Label>
+              <Form.Select
+                value={regProvince1}
+                onChange={(e) => setRegProvince1(e.target.value)}
+              >
+                <option value="">-- เลือกจังหวัด --</option>
+                {provinces.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+          </Row>
+          <Row className="mb-5">
+            <Col md={4}>
+              <Form.Label>รหัสไปรษณีย์</Form.Label>
+              <Form.Control
+                value={regZipcode1}
+                onChange={(e) => setRegZipcode1(e.target.value)}
+                disabled
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>เบอร์โทร</Form.Label>
+              <Form.Control
+                type="tele"
+                value={regFatherNum}
+                onChange={(e) => setRegFatherNum(e.target.value)}
+              />
+            </Col>
+          </Row>
+
+          <Row className="mb-3">
+            <Col md={6}>
+              <Form.Label className="fw-bold">ชื่อมารดา</Form.Label>
+              <Form.Control
+                value={regMotherName}
+                onChange={(e) => setRegMotherName(e.target.value)}
+              />
+            </Col>
+            <Col md={3}>
+              <Form.Label>อาชีพ</Form.Label>
+              <Form.Control
+                value={regOccupation2}
+                onChange={(e) => setRegOccupation2(e.target.value)}
+              />
+            </Col>
+            <Col md={3}>
+              <Form.Label>รายได้ / เดือน</Form.Label>
+              <Form.Control
+                value={regMonthlyIncome2}
+                onChange={(e) => setRegMonthlyIncome2(e.target.value)}
+                type="number"
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={4}>
+              <Form.Label>บ้านเลขที่</Form.Label>
+              <Form.Control
+                value={regHouseNum2}
+                onChange={(e) => setRegHouseNum2(e.target.value)}
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>หมู่ที่</Form.Label>
+              <Form.Control
+                value={regVillageNum2}
+                onChange={(e) => setRegVillageNum2(e.target.value)}
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>ถนน/ตรอก/ซอย</Form.Label>
+              <Form.Control
+                value={regRoad2}
+                onChange={(e) => setRegRoad2(e.target.value)}
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={4}>
+              <Form.Label>ตำบล/แขวง</Form.Label>
+              <Form.Select
+                value={regSubDistrict2}
+                onChange={(e) => setRegSubDistrict2(e.target.value)}
+                disabled={!regDistrict}
+              >
+                <option value="">-- เลือกตำบล --</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col md={4}>
+              <Form.Label>อำเภอ/เขต</Form.Label>
+              <Form.Select
+                value={regDistrict2}
+                onChange={(e) => setRegDistrict2(e.target.value)}
+                disabled={!regProvince}
+              >
+                <option value="">-- เลือกอำเภอ --</option>
+                {amphures.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col md={4}>
+              <Form.Label>จังหวัด</Form.Label>
+              <Form.Select
+                value={regProvince2}
+                onChange={(e) => setRegProvince2(e.target.value)}
+              >
+                <option value="">-- เลือกจังหวัด --</option>
+                {provinces.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+          </Row>
+          <Row className="mb-5">
+            <Col md={4}>
+              <Form.Label>รหัสไปรษณีย์</Form.Label>
+              <Form.Control
+                value={regZipcode2}
+                onChange={(e) => setRegZipcode2(e.target.value)}
+                disabled
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>เบอร์โทร</Form.Label>
+              <Form.Control
+                type="tele"
+                value={regMotherName}
+                onChange={(e) => setRegMotherNum(e.target.value)}
+              />
+            </Col>
+          </Row>
+
+          <Row className="mb-3">
+            <Col md={6}>
+              <Form.Label className="fw-bold">ชื่อผู้ปกครอง</Form.Label>
+              <Form.Control
+                value={regParentName}
+                onChange={(e) => setRegParentName(e.target.value)}
+              />
+            </Col>
+            <Col md={3}>
+              <Form.Label>อาชีพ</Form.Label>
+              <Form.Control
+                value={regOccupation2}
+                onChange={(e) => setRegOccupation3(e.target.value)}
+              />
+            </Col>
+            <Col md={3}>
+              <Form.Label>รายได้ / เดือน</Form.Label>
+              <Form.Control
+                value={regMonthlyIncome3}
+                onChange={(e) => setRegMonthlyIncome3(e.target.value)}
+                type="number"
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={4}>
+              <Form.Label>บ้านเลขที่</Form.Label>
+              <Form.Control
+                value={regHouseNum3}
+                onChange={(e) => setRegHouseNum3(e.target.value)}
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>หมู่ที่</Form.Label>
+              <Form.Control
+                value={regVillageNum3}
+                onChange={(e) => setRegVillageNum3(e.target.value)}
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>ถนน/ตรอก/ซอย</Form.Label>
+              <Form.Control
+                value={regRoad3}
+                onChange={(e) => setRegRoad3(e.target.value)}
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col md={4}>
+              <Form.Label>ตำบล/แขวง</Form.Label>
+              <Form.Select
+                value={regSubDistrict3}
+                onChange={(e) => setRegSubDistrict3(e.target.value)}
+                disabled={!regDistrict}
+              >
+                <option value="">-- เลือกตำบล --</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col md={4}>
+              <Form.Label>อำเภอ/เขต</Form.Label>
+              <Form.Select
+                value={regDistrict3}
+                onChange={(e) => setRegDistrict3(e.target.value)}
+                disabled={!regProvince}
+              >
+                <option value="">-- เลือกอำเภอ --</option>
+                {amphures.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+            <Col md={4}>
+              <Form.Label>จังหวัด</Form.Label>
+              <Form.Select
+                value={regProvince3}
+                onChange={(e) => setRegProvince3(e.target.value)}
+              >
+                <option value="">-- เลือกจังหวัด --</option>
+                {provinces.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name_th}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+          </Row>
+          <Row className="mb-5">
+            <Col md={4}>
+              <Form.Label>รหัสไปรษณีย์</Form.Label>
+              <Form.Control
+                value={regZipcode3}
+                onChange={(e) => setRegZipcode3(e.target.value)}
+                disabled
+              />
+            </Col>
+            <Col md={4}>
+              <Form.Label>เบอร์โทร</Form.Label>
+              <Form.Control
+                type="tele"
+                value={regParentNum}
+                onChange={(e) => setRegParentNum(e.target.value)}
+              />
+            </Col>
+          </Row>
+        </section>
+
+        {/* ปุ่ม */}
+        <div className="d-flex justify-content-center gap-3 mt-4">
+          <Button
+            type="submit"
+            className="edit-butt btn-success rounded-pill px-4 py-2"
+          >
+            บันทึก
+          </Button>
+          <Button
+            type="button"
+            className="delete-butt btn-secondary rounded-pill px-4 py-2"
+          >
+            ยกเลิก
+          </Button>
+        </div>
       </Form>
+
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>กรุณาตรวจสอบข้อมูล</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <h5>ข้อมูลผู้ใช้</h5>
+          <p>
+            <strong>ชื่อ: </strong>
+            {formData.firstName} {formData.lastName}
+          </p>
+          <p>
+            <strong>ตำแหน่ง: </strong>
+            {formData.position}
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            ยกเลิก
+          </Button>
+          <Button variant="primary" onClick={handleConfirmSave}>
+            ตกลง
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <div className="footer">
         <div className="custom-h3">ติดต่อเรา</div>

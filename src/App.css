@@ -11,6 +11,12 @@
   --speed: 500ms;
 }
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .screen {
   justify-content: center;
   align-items: flex-start;
@@ -48,7 +54,7 @@
   height: 100%;
 }
 
-.dropdown-trigger {
+/* .dropdown-trigger {
   display: flex;
   width: 130px;
   height: 47px;
@@ -59,9 +65,9 @@
   border-radius: 65px;
   background: #d9d9d9;
   cursor: pointer;
-}
+} */
 
-.dropdown-menu-1 {
+/* .dropdown-menu-1 {
   top: 55px;
   right: 75px;
   position: absolute;
@@ -73,23 +79,7 @@
   border-radius: 15px;
   border: 1px solid #000;
   background: #fff;
-}
-
-.dropdown-menu-2 {
-  top: 55px;
-  right: 75px;
-  position: absolute;
-  display: flex;
-  width: 210px;
-  height: fit-content;
-  padding: 25px 30px;
-  flex-direction: column;
-  align-items: center;
-  gap: 13px;
-  border-radius: 15px;
-  border: 1px solid #000;
-  background: #fff;
-}
+} */
 
 .teacher-dropdown-menu-1 {
   left: 35px !important;
@@ -538,10 +528,24 @@
   padding: 5px 10px;
   justify-content: center;
   align-items: center;
+  background: linear-gradient(to right, #ff5159, #ff1f2c);
+  color: white;
   border: none;
-  outline: none;
   border-radius: 40px;
-  background: #ff5159;
+  font-size: 0.95rem;
+  font-weight: 500;
+  min-height: 38px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(255, 81, 89, 0.25);
+  transition: all 0.25s ease;
+}
+
+.logout-button:hover {
+  background: linear-gradient(to right, #ff1f2c, #e60012);
+  box-shadow: 0 6px 14px rgba(255, 81, 89, 0.3);
+  transform: translateY(-1px);
+  opacity: 0.9;
+  cursor: pointer;
 }
 
 .save-btn {
@@ -623,4 +627,193 @@
   font-style: normal !important;
   font-weight: 400 !important;
   line-height: normal !important;
+}
+
+/* nav เพิ่มเติม */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f2f2f2;
+  padding: 10px 16px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  white-space: nowrap;
+}
+
+.dropdown-trigger:hover {
+  background-color: #e0e0e0;
+}
+
+.dropdown-icon {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.dropdown-content {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  z-index: 1000;
+}
+
+.dropdown-content a {
+  padding: 8px;
+  color: black;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.dropdown-content a:hover {
+  background-color: #f0f0f0;
+  border-radius: 8px;
+}
+
+.dropdown-content.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0px);
+  transition: var(--speed) ease;
+}
+.dropdown-content.inactive {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-20px);
+  transition: var(--speed) ease;
+}
+
+.dropdown-menu-2 {
+  top: 55px;
+  right: 75px;
+  position: absolute;
+  display: flex;
+  width: 210px;
+  height: fit-content;
+  padding: 30px 30px;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+/* -------------------------------------------------- */
+
+/* Dashboard */
+.dashboard-container {
+  padding: 40px 60px;
+  background-color: #f7f7f7;
+  min-height: 80vh;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.dashboard-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 300px;
+  padding: 30px 20px;
+  background: linear-gradient(to bottom right, #ffffff, #e6ffe6);
+  border: 1px solid #61c554;
+  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  font-size: 1rem;
+  font-weight: 500;
+  color: #000;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background: #dfffdf;
+}
+
+.card-icon {
+  font-size: 1.5rem;
+  margin-right: 10px;
+}
+/* ------------------------------------------------------- */
+
+.birth-address-1,
+.birth-address-2,
+.birth-address-3 {
+  cursor: pointer;
+  position: absolute;
+  background: #fffcfc;
+  padding: 10px;
+  overflow: auto;
+  height: 200px;
+  width: 95%;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.birth-address-1 option,
+.birth-address-2 option,
+.birth-address-3 option {
+  padding: 5px;
+  color: black;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.birth-address-1 option:hover,
+.birth-address-2 option:hover,
+.birth-address-3 option:hover {
+  background-color: #f0f0f0;
+  border-radius: 8px;
+}
+
+.birth-address-1,
+.birth-address-2,
+.birth-address-3 {
+  top: 100%; /* วางไว้ใต้ Form.Control */
+}
+
+/* ซ่อนถ้า inactive */
+.birth-address-1.inactive,
+.birth-address-2.inactive,
+.birth-address-3.inactive {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none; /* ป้องกันไม่ให้คลิกได้ */
+}
+
+.birth-address-1.active,
+.birth-address-2.active,
+.birth-address-3.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto; /* ให้สามารถคลิกได้ */
 }

@@ -7,6 +7,8 @@ import StudentHome from "./components/StudentHome.jsx";
 import TeacherHome from "./components/TeacherHome.jsx";
 import Profile from "./components/Profile.jsx";
 import UserManagement from "./components/UserManagement.jsx";
+import SubjectsManagement from "./components/SubjectsManagement.jsx";
+import TimeTableManagement from "./components/TimeTableManagement.jsx";
 import StudentTableManagement from "./components/StudentTableManagement.jsx";
 import TeacherTableManagement from "./components/TeacherTableManagement.jsx";
 import SchoolRecordManagement from "./components/SchoolRecordManagement.jsx";
@@ -118,6 +120,26 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <AdminRoute>
           <UserManagement />
+        </AdminRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/subjects-management",
+    element: (
+      <ProtectedRoute>
+        <AdminRoute>
+          <SubjectsManagement />
+        </AdminRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/time-table-management",
+    element: (
+      <ProtectedRoute>
+        <AdminRoute>
+          <TimeTableManagement />
         </AdminRoute>
       </ProtectedRoute>
     ),

@@ -70,232 +70,108 @@ function TeacherHome() {
         </div>
 
         <div className="menu-container">
-          <div ref={menuRef2}>
-            <div
-              className="menu-1"
-              onClick={() => {
-                setOpen2(!open2);
-              }}
-            >
+          {/* เมนู ทะเบียน */}
+          <div className="dropdown" ref={menuRef2}>
+            <div className="dropdown-trigger" onClick={() => setOpen2(!open2)}>
               <div className="custom-h5">ทะเบียน</div>
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="25"
-                height="24"
-                viewBox="0 0 25 24"
-                fill="none"
-              >
-                <g clipPath="url(#clip0_282_2287)">
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M13.5599 16.06C13.2787 16.3409 12.8974 16.4987 12.4999 16.4987C12.1024 16.4987 11.7212 16.3409 11.4399 16.06L5.7819 10.404C5.50064 10.1226 5.34268 9.74101 5.34277 9.34315C5.34287 8.94529 5.50101 8.56377 5.7824 8.2825C6.06379 8.00124 6.4454 7.84328 6.84325 7.84338C7.24111 7.84347 7.62264 8.00161 7.9039 8.283L12.4999 12.879L17.0959 8.283C17.3787 8.00963 17.7575 7.85826 18.1508 7.86149C18.5441 7.86472 18.9204 8.0223 19.1986 8.30028C19.4769 8.57826 19.6348 8.95441 19.6384 9.3477C19.642 9.741 19.491 10.12 19.2179 10.403L13.5609 16.061L13.5599 16.06Z"
-                    fill="black"
-                  />
-                </g>
-                <defs>
-                  <clipPath id="clip0_282_2287">
-                    <rect
-                      width="24"
-                      height="24"
-                      fill="white"
-                      transform="translate(0.5)"
-                    />
-                  </clipPath>
-                </defs>
-              </svg>
-            </div>
-            <div
-              className={`menu-1-dropdown ${
-                open2 ? "active" : "inactive"
-              } teacher-dropdown-menu-1`}
-            >
-              <div className="custom-h5 d-flex flex-column align-items-end">
-                <Link to={"/profile"} className="text-black">
-                  ข้อมูลส่วนตัว
-                </Link>
-                {userRole === "admin" && (
-                  <>
-                    <Link to="/usermanagement" className="text-black">
-                      จัดการข้อมูลผู้ใช้
-                    </Link>
-                    <Link to="/student-table-management" className="text-black">
-                      จัดการตารางเรียน
-                    </Link>
-                    <Link
-                      to={"/teacher-table-management"}
-                      className="text-black"
-                    >
-                      จัดการตารางสอน
-                    </Link>
-                  </>
-                )}
-                {userRole === "นักเรียน" && (
-                  <Link to="/student-table" className="text-black">
-                    ตารางเรียน
-                  </Link>
-                )}
-                {userRole === "ครู" && (
-                  <Link to="/teacher-table" className="text-black">
-                    ตารางสอน
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div ref={menuRef3}>
-            <div
-              className="menu-2"
-              onClick={() => {
-                setOpen3(!open3);
-              }}
-            >
-              <div className="custom-h5">ประมวณผลการเรียน</div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="25"
-                height="24"
-                viewBox="0 0 25 24"
-                fill="none"
-              >
-                <g clipPath="url(#clip0_282_2287)">
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M13.5599 16.06C13.2787 16.3409 12.8974 16.4987 12.4999 16.4987C12.1024 16.4987 11.7212 16.3409 11.4399 16.06L5.7819 10.404C5.50064 10.1226 5.34268 9.74101 5.34277 9.34315C5.34287 8.94529 5.50101 8.56377 5.7824 8.2825C6.06379 8.00124 6.4454 7.84328 6.84325 7.84338C7.24111 7.84347 7.62264 8.00161 7.9039 8.283L12.4999 12.879L17.0959 8.283C17.3787 8.00963 17.7575 7.85826 18.1508 7.86149C18.5441 7.86472 18.9204 8.0223 19.1986 8.30028C19.4769 8.57826 19.6348 8.95441 19.6384 9.3477C19.642 9.741 19.491 10.12 19.2179 10.403L13.5609 16.061L13.5599 16.06Z"
-                    fill="black"
-                  />
-                </g>
-                <defs>
-                  <clipPath id="clip0_282_2287">
-                    <rect
-                      width="24"
-                      height="24"
-                      fill="white"
-                      transform="translate(0.5)"
-                    />
-                  </clipPath>
-                </defs>
-              </svg>
-            </div>
-            <div
-              className={`menu-2-dropdown ${
-                open3 ? "active" : "inactive"
-              } teacher-dropdown-menu-2`}
-            >
-              <div className="custom-h5 d-flex flex-column align-items-end">
-                {userRole === "admin" && (
-                  <Link to="/school-record-management" className="text-black">
-                    จัดการผลการเรียน
-                  </Link>
-                )}
-                {userRole === "นักเรียน" && (
-                  <Link to="/school-record-management" className="text-black">
-                    ผลคะแนนรายวิชา
-                  </Link>
-                )}
-                {userRole === "ครู" && (
-                  <Link to="/grade-management" className="text-black">
-                    จัดการคะแนนรายวิชา
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="menu-3">
-            <div className="custom-h5">คำร้อง</div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="25"
-              height="24"
-              viewBox="0 0 25 24"
-              fill="none"
-            >
-              <g clipPath="url(#clip0_282_2287)">
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M13.5599 16.06C13.2787 16.3409 12.8974 16.4987 12.4999 16.4987C12.1024 16.4987 11.7212 16.3409 11.4399 16.06L5.7819 10.404C5.50064 10.1226 5.34268 9.74101 5.34277 9.34315C5.34287 8.94529 5.50101 8.56377 5.7824 8.2825C6.06379 8.00124 6.4454 7.84328 6.84325 7.84338C7.24111 7.84347 7.62264 8.00161 7.9039 8.283L12.4999 12.879L17.0959 8.283C17.3787 8.00963 17.7575 7.85826 18.1508 7.86149C18.5441 7.86472 18.9204 8.0223 19.1986 8.30028C19.4769 8.57826 19.6348 8.95441 19.6384 9.3477C19.642 9.741 19.491 10.12 19.2179 10.403L13.5609 16.061L13.5599 16.06Z"
-                  fill="black"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_282_2287">
-                  <rect
-                    width="24"
-                    height="24"
-                    fill="white"
-                    transform="translate(0.5)"
-                  />
-                </clipPath>
-              </defs>
-            </svg>
-          </div>
-        </div>
-
-        <div className="dropdown-container" ref={menuRef1}>
-          <div
-            className="dropdown-trigger"
-            onClick={() => {
-              setOpen1(!open1);
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="17"
-              height="21"
-              viewBox="0 0 17 21"
-              fill="none"
-            >
-              <g clipPath="url(#clip0_1_313)">
-                <path
-                  d="M0.5 21C0.5 18.8783 1.34285 16.8434 2.84315 15.3431C4.34344 13.8429 6.37827 13 8.5 13C10.6217 13 12.6566 13.8429 14.1569 15.3431C15.6571 16.8434 16.5 18.8783 16.5 21H0.5ZM8.5 12C5.185 12 2.5 9.315 2.5 6C2.5 2.685 5.185 0 8.5 0C11.815 0 14.5 2.685 14.5 6C14.5 9.315 11.815 12 8.5 12Z"
-                  fill="black"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_1_313">
-                  <rect
-                    width="16"
-                    height="21"
-                    fill="white"
-                    transform="translate(0.5)"
-                  />
-                </clipPath>
-              </defs>
-            </svg>
-
-            <div className="custom-h5">{firstName}</div>
-          </div>
-
-          <form>
-            <div className={`dropdown-menu-2 ${open1 ? "active" : "inactive"}`}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
+                className={`dropdown-icon ${open2 ? "rotate" : ""}`}
                 width="24"
                 height="24"
                 viewBox="0 0 24 24"
-                fill="none"
               >
-                <path
-                  d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                  fill="black"
-                />
+                <path d="M7 10l5 5 5-5H7z" />
               </svg>
-              <div className="custom-h5">
-                {firstName} {lastName}
-              </div>
-              <button
-                className="logout-button"
-                type="button"
-                onClick={handleLogout}
-              >
-                <div className="custom-h6">ออกจากระบบ</div>
-              </button>
             </div>
-          </form>
+            <div
+              className={`dropdown-content ${open2 ? "active" : "inactive"}`}
+            >
+              <Link to="/profile">ข้อมูลส่วนตัว</Link>
+              <Link to="/usermanagement">จัดการข้อมูลผู้ใช้</Link>
+              <Link to="/subjects-management">จัดการรายวิชา</Link>
+              <Link to="/time-table-management">จัดการตารางเวลา</Link>
+              <Link to="/student-table-management">จัดการตารางเรียน</Link>
+              <Link to="/teacher-table-management">จัดการตารางสอน</Link>
+            </div>
+          </div>
+
+          {/* เมนู ประมวลผล */}
+          <div className="dropdown" ref={menuRef3}>
+            <div className="dropdown-trigger" onClick={() => setOpen3(!open3)}>
+              <div className="custom-h5">ประมวลผลการเรียน</div>
+              <svg
+                className={`dropdown-icon ${open3 ? "rotate" : ""}`}
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+              >
+                <path d="M7 10l5 5 5-5H7z" />
+              </svg>
+            </div>
+            <div
+              className={`dropdown-content ${open3 ? "active" : "inactive"}`}
+            >
+              <Link to="/school-record-management">จัดการผลการเรียน</Link>
+            </div>
+          </div>
+
+          {/* เมนู คำร้อง */}
+          <div className="dropdown">
+            <div className="dropdown-trigger">
+              <div className="custom-h5">คำร้อง</div>
+              <svg
+                className="dropdown-icon"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+              >
+                <path d="M7 10l5 5 5-5H7z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* โปรไฟล์ */}
+        <div className="dropdown-container" ref={menuRef1}>
+          <div className="dropdown-trigger" onClick={() => setOpen1(!open1)}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
+                fill="black"
+              />
+            </svg>
+            <div className="custom-h5">{firstName}</div>
+          </div>
+          <div className={`dropdown-menu-2 ${open1 ? "active" : "inactive"}`}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
+                fill="black"
+              />
+            </svg>
+            <div className="custom-h4">
+              {firstName} {lastName}
+            </div>
+            <button
+              className="logout-button"
+              type="button"
+              onClick={handleLogout}
+            >
+              <div className="custom-h5">ออกจากระบบ</div>
+            </button>
+          </div>
         </div>
       </div>
       <div className="p-2" style={{ height: "825px" }}>

@@ -4,7 +4,13 @@ import { useUserAuth } from "../context/UserAuthContext";
 import { useStudentTable } from "../context/StudentTableContex";
 import { Button } from "react-bootstrap";
 import { db } from "../firebase";
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  collection,
+} from "firebase/firestore";
 import logo from "../assets/logo.png";
 import { use } from "react";
 
@@ -21,6 +27,7 @@ function StudentTableManagement() {
     "ประถมศึกษาปีที่ 5": "Vr4gnaex3VvDpYpkSerq",
     "ประถมศึกษาปีที่ 6": "idKJQ8WN6fLccjCX5RCK",
   };
+
   const classTable = [
     "ประถมศึกษาปีที่ 1",
     "ประถมศึกษาปีที่ 2",
@@ -29,11 +36,14 @@ function StudentTableManagement() {
     "ประถมศึกษาปีที่ 5",
     "ประถมศึกษาปีที่ 6",
   ];
+
   const academicYear = [2567, 2568];
   const semester = [1, 2];
 
   const [regAcademicYear, setRegAcademicYear] = useState(2567);
   const [regSemester, setRegSemester] = useState(1);
+
+  const [subjects, setSubjects] = useState([]);
 
   const [regMon0830, setRegMon0830] = useState("-");
   const [regMon0930, setRegMon0930] = useState("-");
@@ -292,6 +302,21 @@ function StudentTableManagement() {
         }
       }
     );
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "subjects"), (snapshot) => {
+      const newData = [];
+      snapshot.forEach((doc) => {
+        newData.push({ id: doc.id, ...doc.data() });
+      });
+      if (newData.length === 0) return;
+
+      setSubjects(newData);
+      console.log("Subjects updated:", newData);
+    });
+
     return () => unsubscribe();
   }, []);
 
@@ -759,14 +784,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegMon0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -776,14 +798,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegMon0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -793,14 +812,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegMon1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -810,14 +826,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegMon1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -827,14 +840,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegMon1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
@@ -844,14 +854,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegMon1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -869,14 +876,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegTue0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -886,14 +890,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegTue0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -903,14 +904,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegTue1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -920,14 +918,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegTue1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -937,14 +932,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegTue1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
@@ -954,14 +946,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegTue1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -979,14 +968,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegWed0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -996,14 +982,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegWed0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1013,14 +996,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegWed1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1030,14 +1010,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegWed1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1047,14 +1024,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegWed1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
@@ -1064,14 +1038,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegWed1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -1089,14 +1060,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegThu0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1106,14 +1074,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegThu0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1123,14 +1088,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegThu1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1140,14 +1102,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegThu1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1157,14 +1116,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegThu1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
@@ -1174,14 +1130,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegThu1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -1199,14 +1152,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegFri0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1216,14 +1166,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegFri0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1233,14 +1180,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegFri1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1250,14 +1194,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegFri1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
@@ -1267,14 +1208,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegFri1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
@@ -1284,14 +1222,11 @@ function StudentTableManagement() {
                             onChange={(e) => setRegFri1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                            <option value="ภาษาไทย">ภาษาไทย</option>
-                            <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                            <option value="สังคมศึกษา">สังคมศึกษา</option>
-                            <option value="ลูกเสือ-เนตรนารี">
-                              ลูกเสือ-เนตรนารี
-                            </option>
+                            {subjects.map((subject) => (
+                              <option key={subject.id} value={subject.name}>
+                                {subject.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>

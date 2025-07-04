@@ -1,13 +1,22 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import { useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
 import { Form, Alert, Button, Row, Col, Card } from "react-bootstrap";
 import { db } from "../firebase";
-import { updateDoc, setDoc, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  updateDoc,
+  setDoc,
+  getDoc,
+  doc,
+  onSnapshot,
+} from "firebase/firestore";
 import logo from "../assets/logo.png";
 
 function UserManagement() {
+  const [studentID, setStudentID] = useState("");
+  const [teacherID, setTeacherID] = useState("");
   const [regFirstName, setRegFirstName] = useState("");
   const [regLastName, setRegLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -15,24 +24,7 @@ function UserManagement() {
   const [regPosition, setRegPosition] = useState("ครู");
   const [regClassLevel, setRegClassLevel] = useState("ประถมศึกษาปีที่ 1");
   const [regtaughtSubject, setRegTaughtSubject] = useState("");
-  // const [regReligion, setRegReligion] = useState("");
-  // const [regNationality, setRegNationality] = useState("");
-  // const [regBirthday, setRegBirthday] = useState("");
-  // const [regTeleNum, setRegTeleNum] = useState("");
-  // const [regFatherName, setRegFatherName] = useState("");
-  // const [regMotherName, setRegMotherName] = useState("");
-  // const [regParentName, setRegParentName] = useState("");
-  // const [regFatherNum, setRegFatherNum] = useState("");
-  // const [regMotherNum, setRegMotherNum] = useState("");
-  // const [regParentNum, setRegParentNum] = useState("");
-  // const [regVillageName, setRegVillageName] = useState("");
-  // const [regHouseNum, setRegHouseNum] = useState("");
-  // const [regVillageNum, setRegVillageNum] = useState("");
-  // const [regRoad, setRegRoad] = useState("");
-  // const [regSubDistrict, setRegSubDistrict] = useState("");
-  // const [regDistrict, setRegDistrict] = useState("");
-  // const [regProvince, setRegProvince] = useState("");
-  // const [regZipcode, setRegZipcode] = useState("");
+  const [subjects, setSubjects] = useState([]);
 
   const [position, setPosition] = useState("ครู");
   const [studentClass, setStudentClass] = useState("ประถมศึกษาปีที่ 1");
@@ -74,21 +66,6 @@ function UserManagement() {
     };
   });
 
-  // useEffect(() => {
-  //   const counter = async () => {
-  //     try {
-  //       const counterdoc = await getDoc(
-  //         doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
-  //       );
-  //       setLastStudentID(counterdoc.data().lastStudentID +1);
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   };
-
-  //   counter();
-  // }, []);
-
   async function counter1() {
     //generate รหัสนักเรียน
     let newStudentID = null;
@@ -101,6 +78,7 @@ function UserManagement() {
         await updateDoc(doc(db, "id_counter", "kUHECVelJyWh1piBZsTH"), {
           lastStudentID: newStudentID,
         });
+        setStudentID(newStudentID);
       } else {
         console.log("ไม่พบเอกสาร counter");
       }
@@ -122,6 +100,7 @@ function UserManagement() {
         await updateDoc(doc(db, "id_counter", "kUHECVelJyWh1piBZsTH"), {
           lastTeacherID: newTeacherID,
         });
+        setTeacherID(newTeacherID);
       } else {
         console.log("ไม่พบเอกสาร counter");
       }
@@ -133,9 +112,12 @@ function UserManagement() {
 
   const filteredData = profileData.filter((item) => {
     if (position === "ครู") {
-      return item.position === "ครู";
+      return item.user?.position === "ครู";
     } else if (position === "นักเรียน") {
-      return item.position === "นักเรียน" && item.classLevel === studentClass;
+      return (
+        item.user?.position === "นักเรียน" &&
+        item.user?.classLevel === studentClass
+      );
     }
     return true;
   });
@@ -149,17 +131,8 @@ function UserManagement() {
     }
   };
 
-  // const handleAdd = async () => {
-  //   try {
-  //     navigate("/register");
-  //   } catch (err) {
-  //     console.log(err.message);
-  //   }
-  // };
-
   const handelEdit = async (id) => {
     try {
-      // await userEdit(id);
       navigate(`/usermanagement/profile?id=${id}`);
     } catch (err) {
       console.log(err.message);
@@ -205,18 +178,24 @@ function UserManagement() {
       }
 
       const userProfile = {
-        studentID: regPosition === "นักเรียน" ? lastStudentID : null,
-        teacherID: regPosition === "ครู" ? lastTeacherID : null,
-        taughtSubject: regPosition === "ครู" ? regtaughtSubject : null,
-        email: user.email,
-        firstName: regFirstName,
-        lastName: regLastName,
-        position: regPosition,
-        classLevel: regClassLevel,
         createdAt: new Date(),
+        user: {
+          studentID: regPosition === "นักเรียน" ? lastStudentID : null,
+          teacherID: regPosition === "ครู" ? lastTeacherID : null,
+          classLevel: regPosition === "นักเรียน" ? regClassLevel : null,
+          taughtSubject: regPosition === "ครู" ? regtaughtSubject : null,
+          firstName: regFirstName,
+          lastName: regLastName,
+          position: regPosition,
+        },
       };
 
       await setDoc(doc(db, "profile", user.uid), userProfile);
+      await setDoc(
+        doc(db, "subjects", regtaughtSubject),
+        { teacher: user.uid },
+        { merge: true }
+      );
 
       console.log("✅ User registered and data saved to Firestore!");
 
@@ -227,17 +206,48 @@ function UserManagement() {
       setPassword("");
       setRegPosition("ครู");
       setRegClassLevel("ประถมศึกษาปีที่ 1");
-      setRegtaughtSubject("");
+      setRegTaughtSubject("");
     } catch (err) {
       setError(err.message);
       console.log("❌ Error during registration:", err);
     }
   };
 
+  // ฟังชันสำหรับอัพเดตข้อมูลแบบเรียลไทม์
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "subjects"), (snapshot) => {
+      const newData = [];
+      snapshot.forEach((doc) => {
+        newData.push({ id: doc.id, ...doc.data() });
+      });
+      if (newData.length === 0) return;
+
+      setSubjects(newData);
+      console.log("Subjects updated:", newData);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchCounter = async () => {
+      const counterdoc = await getDoc(
+        doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
+      );
+      if (counterdoc.exists()) {
+        setStudentID(counterdoc.data().lastStudentID + 1);
+        setTeacherID(counterdoc.data().lastTeacherID + 1);
+      } else {
+        console.log("ไม่พบเอกสาร counter");
+      }
+    };
+    fetchCounter();
+  }, []);
+
   return (
     <div className="shool-record-management-page">
       <div className="nav">
-        <div className="logo-container">
+        <div className="logo-container" onClick={() => navigate("/")}>
           <div className="logo-img">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -366,6 +376,7 @@ function UserManagement() {
               จัดการข้อมูลผู้ใช้
             </h3>
             <h3 className="mb-4 fw-bold">ตัวเลือก</h3>
+
             <Row className="mb-4">
               <Col md={2}>
                 <div className="select-wrapper">
@@ -408,8 +419,8 @@ function UserManagement() {
               )}
             </Row>
 
-            <Row className="g-4">
-              <Col md={7}>
+            <Row className="g-4 mb-4">
+              <Col md={12}>
                 <div
                   className="table-wrapper border rounded bg-white shadow-sm"
                   style={{ height: "530px", overflow: "hidden" }}
@@ -419,59 +430,194 @@ function UserManagement() {
                       className="table-warning"
                       style={{ position: "sticky", top: 0, zIndex: 2 }}
                     >
-                      <tr>
-                        <th style={{ width: "33.3%" }}>รหัสประจำตัว</th>
-                        <th style={{ width: "33.3%" }}>ชื่อ-สกุล</th>
-                        <th style={{ width: "33.3%" }}>ตัวเลือก</th>
-                      </tr>
+                      {position === "ครู" ? (
+                        <tr>
+                          <th style={{ width: "20%" }}>รหัสประจำตัว</th>
+                          <th style={{ width: "20%" }}>ชื่อ-สกุล</th>
+                          <th style={{ width: "20%" }}>วิชาที่สอน</th>
+                          <th style={{ width: "20%" }}>ชั้นเรียนที่สอน</th>
+                          <th style={{ width: "20%" }}>ตัวเลือก</th>
+                        </tr>
+                      ) : (
+                        <tr>
+                          <th style={{ width: "33.3%" }}>รหัสประจำตัว</th>
+                          <th style={{ width: "33.3%" }}>ชื่อ-สกุล</th>
+                          <th style={{ width: "33.3%" }}>ตัวเลือก</th>
+                        </tr>
+                      )}
                     </thead>
                   </table>
                   <div className="table-body-scroll no-scrollbar-container">
                     <div className="scroll-inner">
                       <table className="table table-bordered text-center m-0 table-hover">
-                        <tbody>
-                          {[...filteredData]
-                            .sort((a, b) => a.email.localeCompare(b.email))
-                            .map((item, index) => (
-                              <tr key={index}>
-                                <td style={{ width: "33.3%" }}>
-                                  <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
-                                    {item.email?.replace("@gmail.com", "")}
-                                  </div>
-                                </td>
-
-                                <td style={{ width: "33.3%" }}>
-                                  <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
-                                    {item.firstName} {item.lastName}
-                                  </div>
-                                </td>
-                                <td style={{ width: "33.3%" }}>
-                                  <div className="d-flex justify-content-center gap-2">
-                                    <Button
-                                      className="edit-butt"
-                                      size="sm"
-                                      onClick={() => handelEdit(item.id)}
-                                    >
-                                      แก้ไข
-                                    </Button>
-                                    <Button
-                                      className="delete-butt"
-                                      size="sm"
-                                      onClick={() => handelDelete(item.id)}
-                                    >
-                                      ลบ
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
+                        {position === "ครู" ? (
+                          <tbody>
+                            {[...filteredData]
+                              .sort((a, b) =>
+                                (a.user?.teacherID || a.user?.studentID || "")
+                                  .toString()
+                                  .localeCompare(
+                                    (
+                                      b.user?.teacherID ||
+                                      b.user?.studentID ||
+                                      ""
+                                    ).toString()
+                                  )
+                              )
+                              .map((item, index) => (
+                                <tr key={index}>
+                                  <td
+                                    style={{ width: "20%" }}
+                                    onClick={() =>
+                                      navigate(`/profile?id=${item.id}`)
+                                    }
+                                  >
+                                    <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                      {/* แสดงรหัสประจำตัว (teacherID หรือ studentID) */}
+                                      {item.user?.teacherID ||
+                                        item.user?.studentID ||
+                                        "-"}
+                                    </div>
+                                  </td>
+                                  <td
+                                    style={{ width: "20%" }}
+                                    onClick={() =>
+                                      navigate(`/profile?id=${item.id}`)
+                                    }
+                                  >
+                                    <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                      {item.user?.firstName}{" "}
+                                      {item.user?.lastName}
+                                    </div>
+                                  </td>
+                                  <td
+                                    style={{ width: "20%" }}
+                                    onClick={() =>
+                                      navigate(`/profile?id=${item.id}`)
+                                    }
+                                  >
+                                    <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                      {item.user?.taughtSubject || "-"}{" "}
+                                      {subjects.find(
+                                        (s) => s.id === item.user?.taughtSubject
+                                      )?.name || "-"}
+                                    </div>
+                                  </td>
+                                  <td
+                                    style={{ width: "20%" }}
+                                    onClick={() =>
+                                      navigate(`/profile?id=${item.id}`)
+                                    }
+                                  >
+                                    <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                      {subjects.find(
+                                        (s) => s.id === item.user?.taughtSubject
+                                      )?.classLevel || "-"}
+                                    </div>
+                                  </td>
+                                  <td style={{ width: "20%" }}>
+                                    <div className="d-flex justify-content-center gap-2">
+                                      <Button
+                                        className="edit-butt"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handelEdit(item.id);
+                                        }}
+                                      >
+                                        แก้ไข
+                                      </Button>
+                                      <Button
+                                        className="delete-butt"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handelDelete(item.id);
+                                        }}
+                                      >
+                                        ลบ
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        ) : (
+                          <tbody>
+                            {[...filteredData]
+                              .sort((a, b) =>
+                                (a.user?.teacherID || a.user?.studentID || "")
+                                  .toString()
+                                  .localeCompare(
+                                    (
+                                      b.user?.teacherID ||
+                                      b.user?.studentID ||
+                                      ""
+                                    ).toString()
+                                  )
+                              )
+                              .map((item, index) => (
+                                <tr key={index}>
+                                  <td
+                                    style={{ width: "33.3%" }}
+                                    onClick={() =>
+                                      navigate(`/profile?id=${item.id}`)
+                                    }
+                                  >
+                                    <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                      {/* แสดงรหัสประจำตัว (teacherID หรือ studentID) */}
+                                      {item.user?.teacherID ||
+                                        item.user?.studentID ||
+                                        "-"}
+                                    </div>
+                                  </td>
+                                  <td
+                                    style={{ width: "33.3%" }}
+                                    onClick={() =>
+                                      navigate(`/profile?id=${item.id}`)
+                                    }
+                                  >
+                                    <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                      {item.user?.firstName}{" "}
+                                      {item.user?.lastName}
+                                    </div>
+                                  </td>
+                                  <td style={{ width: "33.3%" }}>
+                                    <div className="d-flex justify-content-center gap-2">
+                                      <Button
+                                        className="edit-butt"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handelEdit(item.id);
+                                        }}
+                                      >
+                                        แก้ไข
+                                      </Button>
+                                      <Button
+                                        className="delete-butt"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handelDelete(item.id);
+                                        }}
+                                      >
+                                        ลบ
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        )}
                       </table>
                     </div>
                   </div>
                 </div>
               </Col>
+            </Row>
 
+            <Row>
               <Col md={5}>
                 <Card className="p-4 shadow-sm">
                   <Card.Title className="fw-bold mb-3">
@@ -505,14 +651,11 @@ function UserManagement() {
                               <option value="" disabled>
                                 -- เลือกวิชาที่สอน --
                               </option>
-                              <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
-                              <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                              <option value="ภาษาไทย">ภาษาไทย</option>
-                              <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
-                              <option value="สังคมศึกษา">สังคมศึกษา</option>
-                              <option value="ลูกเสือ-เนตรนารี">
-                                ลูกเสือ-เนตรนารี
-                              </option>
+                              {subjects.map((subject) => (
+                                <option key={subject.id} value={subject.id}>
+                                  {subject.id} {subject.name}
+                                </option>
+                              ))}
                             </Form.Select>
                           </div>
                         ) : (
@@ -543,6 +686,30 @@ function UserManagement() {
                       </Col>
                     </Row>
 
+                    {regPosition === "นักเรียน" ? (
+                      <Row className="mb-3">
+                        <Col md={6}>
+                          <Form.Control
+                            type="text"
+                            value={"รหัสประจำตัว : " + studentID}
+                            className="modern-input fw-bold"
+                            disabled
+                          />
+                        </Col>
+                      </Row>
+                    ) : (
+                      <Row className="mb-3">
+                        <Col md={6}>
+                          <Form.Control
+                            type="text"
+                            value={"รหัสประจำตัว : " + teacherID}
+                            className="modern-input fw-bold"
+                            disabled
+                          />
+                        </Col>
+                      </Row>
+                    )}
+
                     <Row className="mb-3">
                       <Col>
                         <Form.Control
@@ -566,8 +733,7 @@ function UserManagement() {
 
                     <Button
                       type="submit"
-                      variant="primary"
-                      className="w-100 rounded-pill mt-2"
+                      className="w-100 rounded-pill mt-2 edit-butt"
                     >
                       เพิ่มผู้ใช้งาน
                     </Button>
@@ -578,6 +744,7 @@ function UserManagement() {
           </Card.Body>
         </Card>
       </div>
+
       <div className="footer">
         <div className="custom-h3">ติดต่อเรา</div>
       </div>

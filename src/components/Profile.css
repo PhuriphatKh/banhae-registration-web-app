@@ -1,0 +1,56 @@
+.profile-section {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0001;
+  margin-bottom: 2rem;
+  padding: 2rem 1.5rem;
+  width: 100%;
+}
+
+.profile-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2d7a3e;
+  margin-bottom: 1rem;
+  text-align: start;
+}
+
+.profile-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+
+.profile-table th,
+.profile-table td {
+  border: 1px solid #bbb;
+  padding: 0.5rem 1rem;
+  background: #f9f9f9;
+}
+
+.profile-table th {
+  width: 25%;
+  background: #ffd786;
+  text-align: left;
+  font-weight: bold;
+}
+
+.profile-table tr.section-header th {
+  background: #61c554;
+  color: #fff;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.profile-table tr.group-user th {
+  background: #bbbbbb;
+}
+.profile-table tr.group-father th {
+  background: #e0e0e0;
+}
+.profile-table tr.group-mother th {
+  background: #f5f5f5;
+}
+.profile-table tr.group-parent th {
+  background: #e8e8e8;
+}

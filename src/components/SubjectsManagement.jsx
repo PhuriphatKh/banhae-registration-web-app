@@ -12,6 +12,7 @@ import {
   getDocs,
   collection,
   deleteDoc,
+  deleteField,
 } from "firebase/firestore";
 import logo from "../assets/logo.png";
 
@@ -23,6 +24,8 @@ function SubjectsManagement() {
 
   const [studentClass, setStudentClass] = useState("ประถมศึกษาปีที่ 1");
 
+  const [teacherName, setTeacherName] = useState("");
+
   const [editIndex, setEditIndex] = useState(null);
   const [editSubjectID, setEditSubjectID] = useState("");
   const [editSubjectName, setEditSubjectName] = useState("");
@@ -32,6 +35,7 @@ function SubjectsManagement() {
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
   const { logOut, user, firstName, lastName } = useUserAuth();
+  const { profileData } = useUserProfile();
   const navigate = useNavigate();
 
   let menuRef1 = useRef();
@@ -79,6 +83,7 @@ function SubjectsManagement() {
         ...doc.data(),
       }));
       setSubjects(data);
+      console.log("Subjects data updated:", data);
     });
 
     return () => unsubscribe(); // ยกเลิกเมื่อ component unmount
@@ -111,27 +116,57 @@ function SubjectsManagement() {
     setEditSubjectName(subject.name);
   };
 
-  const handleSave = async (id) => {
+  const handleSave = async (oldId) => {
     try {
-      await updateDoc(doc(db, "subjects", id), {
-        name: editSubjectName,
-      });
-
-      const updated = [...subjects];
-
+      // ถ้า id เปลี่ยน
+      if (editSubjectID !== oldId) {
+        // 1. สร้าง doc ใหม่ด้วย id ใหม่
+        await setDoc(doc(db, "subjects", editSubjectID), {
+          name: editSubjectName,
+          classLevel: subjects.find((s) => s.id === oldId)?.classLevel || "",
+          teacher: subjects.find((s) => s.id === oldId)?.teacher || "",
+        });
+        // 2. ลบ doc เดิม
+        await deleteDoc(doc(db, "subjects", oldId));
+      } else {
+        // ถ้า id ไม่เปลี่ยน อัปเดตชื่อปกติ
+        await updateDoc(doc(db, "subjects", oldId), {
+          name: editSubjectName,
+        });
+      }
       setEditIndex(null);
     } catch (err) {
       console.error("❌ Error updating subject:", err);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (teacherID, subjectID) => {
     try {
-      await deleteDoc(doc(db, "subjects", id));
+      await deleteDoc(doc(db, "subjects", subjectID));
+      await setDoc(
+        doc(db, "profile", teacherID),
+        {
+          user: {
+            taughtSubject: deleteField(),
+          },
+        },
+        { merge: true }
+      );
     } catch (err) {
       console.error("❌ Error deleting subject:", err);
     }
   };
+
+  function getTeacherName(teacherId) {
+    const teacherProfile = profileData.find((profileData) => {
+      return profileData.id === teacherId;
+    });
+    return (
+      (teacherProfile?.user?.firstName || "-") +
+      " " +
+      (teacherProfile?.user?.lastName || "-")
+    );
+  }
 
   return (
     <div style={{ backgroundColor: "#BBBBBB" }}>
@@ -305,9 +340,10 @@ function SubjectsManagement() {
                       style={{ position: "sticky", top: 0, zIndex: 2 }}
                     >
                       <tr>
-                        <th style={{ width: "33.3%" }}>รหัสวิชา</th>
-                        <th style={{ width: "33.3%" }}>รายวิชา</th>
-                        <th style={{ width: "33.3%" }}>ตัวเลือก</th>
+                        <th style={{ width: "25%" }}>รหัสวิชา</th>
+                        <th style={{ width: "25%" }}>รายวิชา</th>
+                        <th style={{ width: "25%" }}>ครูผู้สอน</th>
+                        <th style={{ width: "25%" }}>ตัวเลือก</th>
                       </tr>
                     </thead>
                   </table>
@@ -354,6 +390,11 @@ function SubjectsManagement() {
                                   </div>
                                 </td>
                                 <td>
+                                  <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                    {getTeacherName(subject.teacher)}
+                                  </div>
+                                </td>
+                                <td>
                                   <div className="d-flex justify-content-center gap-2">
                                     {index === editIndex ? (
                                       <>
@@ -389,7 +430,7 @@ function SubjectsManagement() {
                                           size="sm"
                                           variant="danger"
                                           onClick={() =>
-                                            handleDelete(subject.id)
+                                            handleDelete(subject.teacher, subject.id)
                                           }
                                         >
                                           ลบ

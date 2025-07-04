@@ -53,7 +53,7 @@ export function UserAuthContextProvider({ children }) {
     try {
       const userDoc = await getDoc(doc(db, "profile", user.uid));
       if (userDoc.exists()) {
-        role = userDoc.data().position;
+        role = userDoc.data().user.position;
         setUserRole(role);
         localStorage.setItem("userRole", role);
       } else {
@@ -83,8 +83,8 @@ export function UserAuthContextProvider({ children }) {
         try {
           const userDoc = await getDoc(doc(db, "profile", user.uid));
           if (userDoc.exists()) {
-            setFirstName(userDoc.data().firstName);
-            setLastName(userDoc.data().lastName);
+            setFirstName(userDoc.data().user.firstName);
+            setLastName(userDoc.data().user.lastName);
           } else {
             console.log("No such user document");
           }

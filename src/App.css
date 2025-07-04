@@ -18,25 +18,29 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .screen {
-  justify-content: center;
-  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f7f7f7;
 }
 
 .nav {
   display: flex;
-  height: 60px;
-  padding: 5px 70px 5px 40px;
   justify-content: space-between;
   align-items: center;
-  flex-shrink: 0;
-  border-radius: 0px 0px 20px 20px;
-  background: #61c554;
+  padding: 5px 70px 5px 40px;
+  background: linear-gradient(90deg, #61c554, #a8e063);
+  border-radius: 0 0 20px 20px;
+  height: 60px;
+  position: relative;
+  z-index: 100;
 }
 
 .logo-container {
+  cursor: pointer;
   display: flex;
-  justify-content: center;
   align-items: center;
+  gap: 10px;
 }
 
 .logo-img {
@@ -54,7 +58,7 @@ input[type="number"]::-webkit-outer-spin-button {
   height: 100%;
 }
 
-/* .dropdown-trigger {
+.dropdown-trigger {
   display: flex;
   width: 130px;
   height: 47px;
@@ -65,9 +69,9 @@ input[type="number"]::-webkit-outer-spin-button {
   border-radius: 65px;
   background: #d9d9d9;
   cursor: pointer;
-} */
+}
 
-/* .dropdown-menu-1 {
+.dropdown-menu-1 {
   top: 55px;
   right: 75px;
   position: absolute;
@@ -79,7 +83,7 @@ input[type="number"]::-webkit-outer-spin-button {
   border-radius: 15px;
   border: 1px solid #000;
   background: #fff;
-} */
+}
 
 .teacher-dropdown-menu-1 {
   left: 35px !important;
@@ -113,12 +117,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .menu-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
   gap: 20px;
-  width: 415px;
-  height: 44px;
 }
 
 .menu-3,
@@ -204,21 +203,16 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .profile-page {
-  height: 944px;
   background-color: #d9d9d9;
 }
 
 .profile-detail {
   display: flex;
-  height: 824px;
   padding: 30px 70px;
   justify-content: center;
 }
 
 .profile-basic-info {
-  display: flex;
-  width: 100%;
-  margin-top: 10px;
   border: 1px solid #61c554;
 }
 
@@ -237,12 +231,10 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .shool-record-management-page {
-  height: 945px;
   background-color: #d9d9d9;
 }
 
 .shool-record-management-detail {
-  height: 825px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -374,15 +366,25 @@ input[type="number"]::-webkit-outer-spin-button {
 .modern-select,
 .modern-input {
   position: relative;
-  background: linear-gradient(to bottom, #ffffff, #f9f9f9);
+  background: linear-gradient(to bottom, #fff8e1 0%, #ffc107 100%);
   border: 1px solid #ccc;
   border-radius: 12px;
   padding: 10px;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(255, 193, 7, 0.25);
+}
+
+.modern-input {
+  background: linear-gradient(to bottom, #ffffff, #f9f9f9);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.modern-select:focus,
+.modern-select:focus {
+  border-color: #FFC107;
+  box-shadow: 0 0 6px rgba(255, 193, 7, 0.6);
+  outline: none;
+}
+
 .modern-input:focus {
   border-color: #66afe9;
   box-shadow: 0 0 6px rgba(102, 175, 233, 0.6);
@@ -507,11 +509,14 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .footer {
   display: flex;
-  height: 60px;
   justify-content: center;
   align-items: center;
-  border-radius: 20px 20px 0px 0px;
   background: #61c554;
+  color: white;
+  padding: 20px;
+  font-size: 1rem;
+  border-radius: 20px 20px 0 0;
+  margin-top: auto;
 }
 
 .login-button {
@@ -525,27 +530,21 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .logout-button {
-  padding: 5px 10px;
-  justify-content: center;
-  align-items: center;
+  padding: 10px 20px;
   background: linear-gradient(to right, #ff5159, #ff1f2c);
   color: white;
   border: none;
   border-radius: 40px;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
-  min-height: 38px;
-  text-align: center;
   box-shadow: 0 4px 10px rgba(255, 81, 89, 0.25);
   transition: all 0.25s ease;
 }
 
 .logout-button:hover {
   background: linear-gradient(to right, #ff1f2c, #e60012);
+  transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(255, 81, 89, 0.3);
-  transform: translateY(-1px);
-  opacity: 0.9;
-  cursor: pointer;
 }
 
 .save-btn {
@@ -638,16 +637,18 @@ input[type="number"]::-webkit-outer-spin-button {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #f2f2f2;
+  background-color: rgba(255, 255, 255, 0.8);
   padding: 10px 16px;
   border-radius: 30px;
   cursor: pointer;
-  transition: background 0.3s ease;
-  white-space: nowrap;
+  transition: background 0.3s ease, transform 0.2s;
+  width: fit-content;
+  backdrop-filter: blur(4px);
 }
 
 .dropdown-trigger:hover {
-  background-color: #e0e0e0;
+  background-color: #f0f0f0;
+  transform: translateY(-2px);
 }
 
 .dropdown-icon {
@@ -677,20 +678,21 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 8px;
   color: black;
   text-decoration: none;
+  border-radius: 8px;
   transition: background 0.2s ease;
 }
 
 .dropdown-content a:hover {
-  background-color: #f0f0f0;
-  border-radius: 8px;
+  background-color: #e8f5e9;
 }
 
 .dropdown-content.active {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0px);
+  transform: translateY(0);
   transition: var(--speed) ease;
 }
+
 .dropdown-content.inactive {
   opacity: 0;
   visibility: hidden;
@@ -703,24 +705,22 @@ input[type="number"]::-webkit-outer-spin-button {
   right: 75px;
   position: absolute;
   display: flex;
-  width: 210px;
-  height: fit-content;
-  padding: 30px 30px;
   flex-direction: column;
   align-items: center;
-  gap: 13px;
+  gap: 10px;
+  padding: 20px;
+  width: 220px;
   border: 1px solid #ccc;
   border-radius: 12px;
+  background: #ffffff;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  background: #fff;
 }
 /* -------------------------------------------------- */
 
 /* Dashboard */
 .dashboard-container {
   padding: 40px 60px;
-  background-color: #f7f7f7;
-  min-height: 80vh;
+  flex: 1;
 }
 
 .dashboard-header {
@@ -736,17 +736,16 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .dashboard-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  height: 300px;
-  padding: 30px 20px;
+  height: 280px;
+  padding: 20px;
+  gap: 10px;
   background: linear-gradient(to bottom right, #ffffff, #e6ffe6);
   border: 1px solid #61c554;
   border-radius: 20px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  font-size: 1rem;
-  font-weight: 500;
   color: #000;
   text-decoration: none;
   transition: all 0.25s ease;
@@ -758,9 +757,14 @@ input[type="number"]::-webkit-outer-spin-button {
   background: #dfffdf;
 }
 
-.card-icon {
-  font-size: 1.5rem;
-  margin-right: 10px;
+.dashboard-icon {
+  width: 100px;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover .dashboard-icon {
+  transform: scale(1.1);
 }
 /* ------------------------------------------------------- */
 
@@ -816,4 +820,16 @@ input[type="number"]::-webkit-outer-spin-button {
   opacity: 1;
   visibility: visible;
   pointer-events: auto; /* ให้สามารถคลิกได้ */
+}
+
+.grade-header {
+  border: 1px solid #000;
+  padding: 0 30px;
+}
+
+.grade-header tr,
+.grade-header th,
+.grade-header td {
+  border: 1px solid #43a047 !important;
+  padding: 0 5px;
 }

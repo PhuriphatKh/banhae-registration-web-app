@@ -1,23 +1,196 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router";
+import { useLocation, useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
-import { Button } from "react-bootstrap";
+import { Button, Row, Col } from "react-bootstrap";
 import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import logo from "../assets/logo.png";
+import "./Profile.css";
 
 function Profile() {
+  const [profileID, setProfileID] = useState("");
+  const [profileData, setProfileData] = useState({
+    profile: {
+      user: {
+        studentID: "-",
+        teacherID: "-",
+        firstName: "-",
+        lastName: "-",
+        position: "-",
+        classLevel: "-",
+        birthDate: "-",
+        ethnicity: "-",
+        nationality: "-",
+        religion: "-",
+      },
+      father: {
+        fullName: "-",
+        occupation: "-",
+        monthlyIncome: "-",
+      },
+      mother: {
+        fullName: "-",
+        occupation: "-",
+        monthlyIncome: "-",
+      },
+      parent: {
+        fullName: "-",
+        occupation: "-",
+        monthlyIncome: "-",
+      },
+    },
+
+    address: {
+      user: {
+        houseNum: "-",
+        villageNum: "-",
+        villageName: "-",
+        road: "-",
+        subDistrict: "-",
+        subDistrictName: "-",
+        district: "-",
+        districtName: "-",
+        province: "-",
+        provinceName: "-",
+        zipcode: "-",
+        teleNum: "-",
+      },
+      father: {
+        houseNum: "-",
+        villageNum: "-",
+        villageName: "-",
+        road: "-",
+        subDistrict: "-",
+        subDistrictName: "-",
+        district: "-",
+        districtName: "-",
+        province: "-",
+        provinceName: "-",
+        zipcode: "-",
+        fatherNum: "-",
+      },
+      mother: {
+        houseNum: "-",
+        villageNum: "-",
+        villageName: "-",
+        road: "-",
+        subDistrict: "-",
+        subDistrictName: "-",
+        district: "-",
+        districtName: "-",
+        province: "-",
+        provinceName: "-",
+        zipcode: "-",
+        motherNum: "-",
+      },
+      parent: {
+        houseNum: "-",
+        villageNum: "-",
+        villageName: "-",
+        road: "-",
+        subDistrict: "-",
+        subDistrictName: "-",
+        district: "-",
+        districtName: "-",
+        province: "-",
+        provinceName: "-",
+        zipcode: "-",
+        parentNum: "-",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!profileID) return;
+
+    const unsubscribe = onSnapshot(
+      doc(db, "profile", profileID),
+      (snapshot) => {
+        const newData = snapshot.data();
+        if (!newData) return;
+
+        setProfileData((prev) => ({
+          ...prev,
+          profile: {
+            user: {
+              studentID: newData.user?.studentID || "-",
+              teacherID: newData.user?.teacherID || "-",
+              firstName: newData.user?.firstName || "-",
+              lastName: newData.user?.lastName || "-",
+              position: newData.user?.position || "-",
+              classLevel: newData.user?.classLevel || "-",
+              taughtSubject: newData.user?.taughtSubject || [],
+              birthDate: newData.user?.birthDate || "-",
+              ethnicity: newData.user?.ethnicity || "-",
+              nationality: newData.user?.nationality || "-",
+              religion: newData.user?.religion || "-",
+            },
+            father: {
+              firstName: newData.father?.fullName?.split(" ")[0] || "-",
+              lastName: newData.father?.fullName?.split(" ")[1] || "-",
+              occupation: newData.father?.occupation || "-",
+              monthlyIncome: newData.father?.monthlyIncome || "-",
+            },
+            mother: {
+              firstName: newData.mother?.fullName?.split(" ")[0] || "-",
+              lastName: newData.mother?.fullName?.split(" ")[1] || "-",
+              occupation: newData.mother?.occupation || "-",
+              monthlyIncome: newData.mother?.monthlyIncome || "-",
+            },
+            parent: {
+              firstName: newData.parent?.fullName?.split(" ")[0] || "-",
+              lastName: newData.parent?.fullName?.split(" ")[1] || "-",
+              occupation: newData.parent?.occupation || "-",
+              monthlyIncome: newData.parent?.monthlyIncome || "-",
+            },
+          },
+        }));
+
+        console.log("Profile data updated:", newData);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [profileID]);
+
+  useEffect(() => {
+    if (!profileID) return;
+
+    const unsubscribe = onSnapshot(
+      doc(db, "address", profileID),
+      (snapshot) => {
+        const newData = snapshot.data();
+        if (!newData) return;
+
+        setProfileData((prev) => ({
+          ...prev,
+          address: {
+            user: { ...prev.address.user, ...newData.user },
+            father: { ...prev.address.father, ...newData.father },
+            mother: { ...prev.address.mother, ...newData.mother },
+            parent: { ...prev.address.parent, ...newData.parent },
+          },
+        }));
+
+        console.log("Address data updated:", newData);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [profileID]);
+
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
   const { logOut, user, firstName, lastName, userRole } = useUserAuth();
-  const { profileData } = useUserProfile();
   const navigate = useNavigate();
 
   let menuRef1 = useRef();
   let menuRef2 = useRef();
   let menuRef3 = useRef();
+
+  const location = useLocation();
 
   useEffect(() => {
     let handler = (e) => {
@@ -52,6 +225,12 @@ function Profile() {
       console.log(err.message);
     }
   };
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const id = queryParams.get("id");
+    if (id) setProfileID(id);
+  }, [location.search]);
 
   return (
     <div className="profile-page">
@@ -133,8 +312,6 @@ function Profile() {
             </div>
           </div>
         </div>
-
-        {/* โปรไฟล์ */}
         <div className="dropdown-container" ref={menuRef1}>
           <div className="dropdown-trigger" onClick={() => setOpen1(!open1)}>
             <svg
@@ -178,137 +355,264 @@ function Profile() {
         </div>
       </div>
       <div className="profile-detail">
-        <div
-          className="d-flex flex-column align-items-center p-3 w-100"
-          style={{ backgroundColor: "white", height: "fit-content" }}
-        >
-          <div>ข้อมูลส่วนตัว</div>
-          <div className="profile-basic-info">
-            <div
-              className="profile-pic-container"
-              style={{ borderRight: "1px solid #61C554" }}
-            ></div>
-            <div className="profile-info-container p-3 w-100">
-              <div>เลขประจำตัว:</div>
-              <div>ชื่อ-สกุล:</div>
-              <div>เบอรํโทรศัพท์:</div>
-              <div>วันเกิด:</div>
-            </div>
-          </div>
-          <div className="w-100 mt-1 d-flex" style={{ border: "1px solid" }}>
-            <div className="table-head" style={{ borderRight: "1px solid" }}>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#FFD786" }}
-              >
-                ที่อยู่
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                ชื่อหมู่บ้าน
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                บ้านเลขที่
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                หมู่ที่
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                ถนน/ตรอก/ซอย
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                ตำบล/แขวง
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                อำเภอ/เขต
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                จังหวัด
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                รหัสไปรษณีย์
-              </div>
-            </div>
-            <div className="d-flex flex-column w-100">
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#FFD786", color: "transparent" }}
-              >
-                ที่อยู่
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                -
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                -
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                -
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                -
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                -
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                -
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                -
-              </div>
-              <div
-                className="ps-3 pt-1 pb-1 mt-1"
-                style={{ backgroundColor: "#BBBBBB" }}
-              >
-                -
-              </div>
-            </div>
-          </div>
+        <div className="profile-section">
+          <div className="profile-title">ข้อมูลส่วนตัว</div>
+          <table className="profile-table">
+            <tbody>
+              <tr>
+                <th>ชื่อ-สกุล</th>
+                <td>
+                  {profileData.profile.user.firstName}{" "}
+                  {profileData.profile.user.lastName}
+                </td>
+              </tr>
+              <tr>
+                <th>ตำแหน่ง</th>
+                <td>{profileData.profile.user.position}</td>
+              </tr>
+              <tr>
+                <th>
+                  {profileData.profile.user.position === "นักเรียน"
+                    ? "ระดับการศึกษา"
+                    : "วิชาที่สอน"}
+                </th>
+                <td>
+                  {profileData.profile.user.position === "นักเรียน"
+                    ? profileData.profile.user.classLevel
+                    : profileData.profile.user.taughtSubject}
+                </td>
+              </tr>
+              <tr>
+                <th>เกิดวันที่</th>
+                <td>
+                  {profileData.profile.user.birthDate
+                    ? new Date(
+                        profileData.profile.user.birthDate
+                      ).toLocaleDateString("th-TH", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "-"}
+                </td>
+              </tr>
+              <tr>
+                <th>เชื้อชาติ</th>
+                <td>{profileData.profile.user.ethnicity}</td>
+              </tr>
+              <tr>
+                <th>สัญชาติ</th>
+                <td>{profileData.profile.user.nationality || "-"}</td>
+              </tr>
+              <tr>
+                <th>ศาสนา</th>
+                <td>{profileData.profile.user.religion || "-"}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div className="profile-title mt-3">ที่อยู่ปัจจุบัน</div>
+          <table className="profile-table">
+            <tbody>
+              <tr className="group-user">
+                <th>บ้านเลขที่</th>
+                <td>{profileData.address?.user?.houseNum || "-"}</td>
+              </tr>
+              <tr className="group-user">
+                <th>หมู่ที่</th>
+                <td>{profileData.address?.user?.villageNum || "-"}</td>
+              </tr>
+              <tr className="group-user">
+                <th>ชื่อหมู่บ้าน</th>
+                <td>{profileData.address?.user?.villageName || "-"}</td>
+              </tr>
+              <tr className="group-user">
+                <th>ถนน/ตรอก/ซอย</th>
+                <td>{profileData.address?.user?.road || "-"}</td>
+              </tr>
+              <tr className="group-user">
+                <th>ตำบล/แขวง</th>
+                <td>{profileData.address?.user?.subDistrictName || "-"}</td>
+              </tr>
+              <tr className="group-user">
+                <th>อำเภอ/เขต</th>
+                <td>{profileData.address?.user?.districtName || "-"}</td>
+              </tr>
+              <tr className="group-user">
+                <th>จังหวัด</th>
+                <td>{profileData.address?.user?.provinceName || "-"}</td>
+              </tr>
+              <tr className="group-user">
+                <th>รหัสไปรษณีย์</th>
+                <td>{profileData.address?.user?.zipcode || "-"}</td>
+              </tr>
+              <tr className="group-user">
+                <th>เบอร์โทรศัพท์</th>
+                <td>{profileData.address?.user?.teleNum || "-"}</td>
+              </tr>
+            </tbody>
+          </table>
+          { profileData.profile.user.position === "นักเรียน" ? (
+            <>
+              <div className="profile-title mt-3">ข้อมูลครอบครัว</div>
+              <table className="profile-table">
+                <tbody>
+                  <tr className="section-header">
+                    <th colSpan={2}>บิดา</th>
+                  </tr>
+                  <tr className="group-father">
+                    <th>ชื่อ-สกุล</th>
+                    <td>
+                      {profileData.profile.father.firstName}{" "}
+                      {profileData.profile.father.lastName}
+                    </td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>อาชีพ</th>
+                    <td>{profileData.profile.father.occupation || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>รายได้/เดือน</th>
+                    <td>{profileData.profile.father.monthlyIncome || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>บ้านเลขที่</th>
+                    <td>{profileData.address?.father?.houseNum || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>หมู่ที่</th>
+                    <td>{profileData.address?.father?.villageNum || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>ถนน/ตรอก/ซอย</th>
+                    <td>{profileData.address?.father?.road || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>ตำบล/แขวง</th>
+                    <td>{profileData.address?.father?.subDistrictName || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>อำเภอ/เขต</th>
+                    <td>{profileData.address?.father?.districtName || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>จังหวัด</th>
+                    <td>{profileData.address?.father?.provinceName || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>รหัสไปรษณีย์</th>
+                    <td>{profileData.address?.father?.zipcode || "-"}</td>
+                  </tr>
+                  <tr className="group-father">
+                    <th>เบอร์โทรศัพท์</th>
+                    <td>{profileData.address?.father?.fatherNum || "-"}</td>
+                  </tr>
+
+                  <tr className="section-header">
+                    <th colSpan={2}>มารดา</th>
+                  </tr>              
+                  <tr className="group-mother">
+                    <th>ชื่อ-สกุล</th>
+                    <td>
+                      {profileData.profile.mother.firstName}{" "}
+                      {profileData.profile.mother.lastName}
+                    </td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>อาชีพ</th>
+                    <td>{profileData.profile.mother.occupation || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>รายได้/เดือน</th>
+                    <td>{profileData.profile.mother.monthlyIncome || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>บ้านเลขที่</th>
+                    <td>{profileData.address?.mother?.houseNum || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>หมู่ที่</th>
+                    <td>{profileData.address?.mother?.villageNum || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>ถนน/ตรอก/ซอย</th>
+                    <td>{profileData.address?.mother?.road || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>ตำบล/แขวง</th>
+                    <td>{profileData.address?.mother?.subDistrictName || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>อำเภอ/เขต</th>
+                    <td>{profileData.address?.mother?.districtName || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>จังหวัด</th>
+                    <td>{profileData.address?.mother?.provinceName || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>รหัสไปรษณีย์</th>
+                    <td>{profileData.address?.mother?.zipcode || "-"}</td>
+                  </tr>
+                  <tr className="group-mother">
+                    <th>เบอร์โทรศัพท์</th>
+                    <td>{profileData.address?.mother?.motherNum || "-"}</td>
+                  </tr>
+
+                  <tr className="section-header">
+                    <th colSpan={2}>ผู้ปกครอง</th>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>ชื่อ-สกุล</th>
+                    <td>
+                      {profileData.profile.parent.firstName}{" "}
+                      {profileData.profile.parent.lastName}
+                    </td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>อาชีพ</th>
+                    <td>{profileData.profile.parent.occupation || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>รายได้/เดือน</th>
+                    <td>{profileData.profile.parent.monthlyIncome || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>บ้านเลขที่</th>
+                    <td>{profileData.address?.parent?.houseNum || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>หมู่ที่</th>
+                    <td>{profileData.address?.parent?.villageNum || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>ถนน/ตรอก/ซอย</th>
+                    <td>{profileData.address?.parent?.road || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>ตำบล/แขวง</th>
+                    <td>{profileData.address?.parent?.subDistrictName || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>อำเภอ/เขต</th>
+                    <td>{profileData.address?.parent?.districtName || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>จังหวัด</th>
+                    <td>{profileData.address?.parent?.provinceName || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>รหัสไปรษณีย์</th>
+                    <td>{profileData.address?.parent?.zipcode || "-"}</td>
+                  </tr>
+                  <tr className="group-parent">
+                    <th>เบอร์โทรศัพท์</th>
+                    <td>{profileData.address?.parent?.parentNum || "-"}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </>
+          ) : null }
+          
         </div>
       </div>
       <div className="footer">

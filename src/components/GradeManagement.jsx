@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Form, Alert, Button, Row, Col, Card } from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
@@ -59,7 +60,7 @@ function GradeManagement() {
     if (!profileData || profileData.length === 0) return;
 
     const loadStudents = profileData.filter(
-      (profile) => profile.position === "นักเรียน"
+      (profile) => profile.user && profile.user.position === "นักเรียน"
     );
 
     setStudents(loadStudents);
@@ -67,7 +68,7 @@ function GradeManagement() {
   }, [profileData]);
 
   const filteredData = students.filter(
-    (item) => item.classLevel === studentClass
+    (item) => item.user && item.user.classLevel === studentClass
   );
 
   const handelEdit = async (id) => {
@@ -174,21 +175,9 @@ function GradeManagement() {
                 fill="black"
               />
             </svg>
-            <div className="custom-h5">{firstName}</div>
+            <div className="custom-h5">{}</div>
           </div>
           <div className={`dropdown-menu-2 ${open1 ? "active" : "inactive"}`}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                fill="black"
-              />
-            </svg>
             <div className="custom-h4">
               {firstName} {lastName}
             </div>
@@ -202,8 +191,8 @@ function GradeManagement() {
           </div>
         </div>
       </div>
-      <div className="p-4" style={{ height: "825px" }}>
-        <div className="bg-white w-100 h-100">
+      <div className="p-4" style={{ minHeight: "817px" }}>
+        <div className="bg-white w-100" style={{ minHeight: "760px" }}>
           <div className="d-flex justify-content-center custom-h1 fw-bold p-3">
             จัดการคะแนนรายวิชา
           </div>
@@ -224,74 +213,151 @@ function GradeManagement() {
               </select>
             </div>
           </div>
-          <div className="d-flex flex-column border border-black w-50 h-75 ms-3">
-            <div
-              className="d-flex"
-              style={{
-                borderBottom: "1px solid",
-                backgroundColor: "#FFD786",
-              }}
-            >
-              <div className="custom-h3 d-flex justify-content-center w-25">
-                รหัสประจำตัว
-              </div>
-              <div
-                className="custom-h3 d-flex justify-content-center w-50"
-                style={{ borderLeft: "1px solid" }}
-              >
-                ชื่อ-สกุล
-              </div>
-              <div
-                className="custom-h3 d-flex justify-content-center w-25"
-                style={{ borderLeft: "1px solid" }}
-              >
-                ตัวเลือก
-              </div>
-            </div>
-            <div className="d-flex flex-column overflow-auto">
-              {[...filteredData]
-                .sort((a, b) => a.email.localeCompare(b.email))
-                .map((item, index) => (
-                  <div className="d-flex" key={index}>
-                    <div className="d-flex align-items-center w-25">
-                      <div
-                        className="mt-1 mb-1 p-1 w-100 text-center"
-                        style={{ backgroundColor: "#BBBBBB" }}
-                      >
-                        {item.email?.replace("@gmail.com", "")}
-                      </div>
-                    </div>
-                    <div
-                      className="d-flex align-items-center w-50"
-                      style={{ borderLeft: "1px solid" }}
-                    >
-                      <div
-                        className="mt-1 mb-1 p-1 w-100 text-center"
-                        style={{ backgroundColor: "#EFEFEF" }}
-                      >
-                        {item.firstName} {item.lastName}
-                      </div>
-                    </div>
-                    <div
-                      className="d-flex justify-content-center p-1 w-25"
-                      style={{ width: "100px", borderLeft: "1px solid" }}
-                    >
-                      <button
-                        className="p-1 btn btn-success"
-                        style={{
-                          width: "100px",
-                          border: "#61C554",
-                          borderRadius: "20px",
-                          background: "#61C554",
-                        }}
-                        onClick={() => handelEdit(item.id)}
-                      >
-                        แก้ไข
-                      </button>
-                    </div>
-                  </div>
+          <div className="w-100 p-3">
+            <table className="w-100">
+              <thead>
+                <tr className="grade-header">
+                  <th rowSpan={4} className="text-center" style={{ minWidth: "100px" }}>
+                    รหัสประจำตัว
+                  </th>
+                  <th rowSpan={4} className="text-center" style={{ minWidth: "200px" }}>
+                    ชื่อ - นามสกุล
+                  </th>
+                  <th colSpan={4} className="text-center">
+                    ภาคเรียนที่ 1
+                  </th>
+                  <th colSpan={4} className="text-center">
+                    ภาคเรียนที่ 2
+                  </th>
+                  <th colSpan={2} className="text-center">
+                    ผลการเรียนรู้รายปี
+                  </th>
+                  <th rowSpan={4} className="text-center">
+                    ผลการแก้ไข
+                  </th>
+                  <th rowSpan={2} colSpan={2} className="text-center">
+                    สรุปผลการประเมิน
+                  </th>
+                  <th rowSpan={4} className="text-center">
+                    หมายเหตุ
+                  </th>
+                </tr>
+                <tr className="grade-header">
+                  <th rowSpan={2} className="text-center">
+                    ตัวชี้วัด
+                  </th>
+                  <th className="text-center">ระหว่างเรียน</th>
+                  <th className="text-center">ปลายภาค</th>
+                  <th className="text-center">รวม</th>
+                  <th rowSpan={2} className="text-center">
+                    ตัวชี้วัด
+                  </th>
+                  <th className="text-center">ระหว่างเรียน</th>
+                  <th className="text-center">ปลายภาค</th>
+                  <th className="text-center">รวม</th>
+                  <th className="text-center">รวม 2 ภาค</th>
+                  <th rowSpan={3} className="text-center">
+                    ระดับผลการเรียน
+                  </th>
+                </tr>
+                <tr className="grade-header">
+                  <th className="text-center">เต็ม</th>
+                  <th className="text-center">เต็ม</th>
+                  <th className="text-center">เต็ม</th>
+                  <th className="text-center">เต็ม</th>
+                  <th className="text-center">เต็ม</th>
+                  <th className="text-center">เต็ม</th>
+                  <th className="text-center">เต็ม</th>
+                  <th rowSpan={2} className="text-center">
+                    ผ่าน
+                  </th>
+                  <th rowSpan={2} className="text-center">
+                    ไม่ผ่าน
+                  </th>
+                </tr>
+                <tr className="grade-header">
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                  <th className="text-center" style={{ maxWidth: "30px" }}>
+                    <Form.Control></Form.Control>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map((student) => (
+                  <tr key={student.id} className="grade-header">
+                    <td className="text-center">{student.user.studentID}</td>
+                    <td className="text-center">
+                      {student.user.firstName} {student.user.lastName}
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                    <td className="text-center">
+                      <Form.Control type="text" />
+                    </td>
+                  </tr>
                 ))}
-            </div>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

@@ -87,11 +87,7 @@ function TeacherHome() {
               className={`dropdown-content ${open2 ? "active" : "inactive"}`}
             >
               <Link to="/profile">ข้อมูลส่วนตัว</Link>
-              <Link to="/usermanagement">จัดการข้อมูลผู้ใช้</Link>
-              <Link to="/subjects-management">จัดการรายวิชา</Link>
-              <Link to="/time-table-management">จัดการตารางเวลา</Link>
-              <Link to="/student-table-management">จัดการตารางเรียน</Link>
-              <Link to="/teacher-table-management">จัดการตารางสอน</Link>
+              <Link to="/teacher-table">ตารางสอน</Link>
             </div>
           </div>
 
@@ -111,7 +107,7 @@ function TeacherHome() {
             <div
               className={`dropdown-content ${open3 ? "active" : "inactive"}`}
             >
-              <Link to="/school-record-management">จัดการผลการเรียน</Link>
+              <Link to="/grade-management">จัดการผลการเรียน</Link>
             </div>
           </div>
 

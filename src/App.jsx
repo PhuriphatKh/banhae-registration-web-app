@@ -69,7 +69,7 @@ function App() {
   return (
     <div className="screen">
       <div className="nav">
-        <div className="logo-container">
+        <div className="d-flex align-items-center">
           <div className="logo-img">
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -17,11 +17,12 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-.screen {
-  display: flex;
-  flex-direction: column;
+.page {
   min-height: 100vh;
-  background-color: #f7f7f7;
+}
+
+.page-detail {
+  min-height: calc(100vh - 128px);
 }
 
 .nav {
@@ -37,13 +38,13 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .logo-container {
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .logo-img {
+  cursor: pointer;
   position: relative;
   width: 66px;
   height: 49px;
@@ -235,10 +236,10 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .shool-record-management-detail {
+
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 25px;
 }
 
 .shool-record-management-container {
@@ -380,7 +381,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .modern-select:focus {
-  border-color: #FFC107;
+  border-color: #ffc107;
   box-shadow: 0 0 6px rgba(255, 193, 7, 0.6);
   outline: none;
 }
@@ -516,7 +517,6 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 20px;
   font-size: 1rem;
   border-radius: 20px 20px 0 0;
-  margin-top: auto;
 }
 
 .login-button {

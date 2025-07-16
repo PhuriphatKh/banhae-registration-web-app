@@ -265,7 +265,7 @@ function TimeTableManagement() {
         </div>
       </div>
 
-      <div className="p-2" style={{ height: "825px" }}>
+      <div className="page-detail p-2">
         <div className="d-flex h-100">
           <div className="p-2" style={{ width: "40%" }}>
             <div className="d-flex flex-column w-100 h-100 gap-1">

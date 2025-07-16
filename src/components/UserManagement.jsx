@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, use } from "react";
-import { useNavigate, Link } from "react-router";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
-import { Form, Alert, Button, Row, Col, Card } from "react-bootstrap";
+import { Form, Button, Modal, Row, Col, Card } from "react-bootstrap";
 import { db } from "../firebase";
 import {
   collection,
@@ -11,16 +11,16 @@ import {
   getDoc,
   doc,
   onSnapshot,
+  arrayUnion,
 } from "firebase/firestore";
-import logo from "../assets/logo.png";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
 
 function UserManagement() {
   const [studentID, setStudentID] = useState("");
   const [teacherID, setTeacherID] = useState("");
   const [regFirstName, setRegFirstName] = useState("");
   const [regLastName, setRegLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [regPosition, setRegPosition] = useState("ครู");
   const [regClassLevel, setRegClassLevel] = useState("ประถมศึกษาปีที่ 1");
   const [regtaughtSubject, setRegTaughtSubject] = useState("");
@@ -28,44 +28,17 @@ function UserManagement() {
 
   const [position, setPosition] = useState("ครู");
   const [studentClass, setStudentClass] = useState("ประถมศึกษาปีที่ 1");
-  const { signUp, logOut, user, firstName, lastName } = useUserAuth();
-  const { profileData, userEdit, userDelete } = useUserProfile();
+  const { signUp, logOut } = useUserAuth();
+  const { profileData, userDelete } = useUserProfile();
+
+  const [show, setShow] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
   const [error, setError] = useState("");
-  const [open1, setOpen1] = useState(false);
-  const [open2, setOpen2] = useState(false);
-  const [open3, setOpen3] = useState(false);
   const navigate = useNavigate();
 
-  let menuRef1 = useRef();
-  let menuRef2 = useRef();
-  let menuRef3 = useRef();
-
-  useEffect(() => {
-    let handler = (e) => {
-      if (!menuRef1.current.contains(e.target)) {
-        setOpen1(false);
-        console.log(menuRef1.current);
-      }
-
-      if (!menuRef2.current.contains(e.target)) {
-        setOpen2(false);
-        console.log(menuRef2.current);
-      }
-
-      if (!menuRef3.current.contains(e.target)) {
-        setOpen3(false);
-        console.log(menuRef3.current);
-      }
-    };
-
-    document.addEventListener("mousedown", handler);
-
-    return () => {
-      document.removeEventListener("mousedown", handler);
-    };
-  });
-
+  // ฟังก์ชันสำหรับสร้างรหัสนักเรียนและรหัสครู
   async function counter1() {
     //generate รหัสนักเรียน
     let newStudentID = null;
@@ -110,6 +83,7 @@ function UserManagement() {
     return newTeacherID;
   }
 
+  // ฟังก์ชันสำหรับกรองข้อมูลผู้ใช้ตามตำแหน่งและชั้นเรียน
   const filteredData = profileData.filter((item) => {
     if (position === "ครู") {
       return item.user?.position === "ครู";
@@ -122,6 +96,7 @@ function UserManagement() {
     return true;
   });
 
+  // ฟังก์ชันสำหรับออกจากระบบ
   const handleLogout = async () => {
     try {
       await logOut();
@@ -131,6 +106,8 @@ function UserManagement() {
     }
   };
 
+  // ฟังก์ชันสำหรับแก้ไขข้อมูลผู้ใช้
+  // ใช้ navigate เพื่อเปลี่ยนเส้นทางไปยังหน้าจัดการโปรไฟล์
   const handelEdit = async (id) => {
     try {
       navigate(`/usermanagement/profile?id=${id}`);
@@ -139,6 +116,7 @@ function UserManagement() {
     }
   };
 
+  // ฟังก์ชันสำหรับลบข้อมูลผู้ใช้
   const handelDelete = async (id) => {
     try {
       await userDelete(id);
@@ -147,6 +125,8 @@ function UserManagement() {
     }
   };
 
+  // ฟังก์ชันสำหรับสมัครสมาชิกผู้ใช้ใหม่
+  // ใช้ signUp จาก context เพื่อสร้างผู้ใช้ใหม่
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -176,6 +156,7 @@ function UserManagement() {
         setError("ไม่สามารถสมัครผู้ใช้ได้ (user is null)");
         return;
       }
+      handleClose();
 
       const userProfile = {
         createdAt: new Date(),
@@ -191,19 +172,30 @@ function UserManagement() {
       };
 
       await setDoc(doc(db, "profile", user.uid), userProfile);
-      await setDoc(
-        doc(db, "subjects", regtaughtSubject),
-        { teacher: user.uid },
-        { merge: true }
-      );
+      if (
+        regPosition === "ครู" &&
+        regtaughtSubject &&
+        regtaughtSubject.trim() !== ""
+      ) {
+        // If the registered user is a teacher, ensure the subject exists and add the teacher's UID to the subject's 'teachers' array.
+        // This keeps track of which teachers are assigned to which subjects.
+        if (regPosition === "ครู" && regtaughtSubject) {
+          await setDoc(
+            doc(db, "subjects", regtaughtSubject),
+            {},
+            { merge: true }
+          );
+          await updateDoc(doc(db, "subjects", regtaughtSubject), {
+            teachers: arrayUnion(user.uid),
+          });
+        }
+      }
 
       console.log("✅ User registered and data saved to Firestore!");
 
       // ✅ เคลียร์ฟอร์ม
       setRegFirstName("");
       setRegLastName("");
-      setEmail("");
-      setPassword("");
       setRegPosition("ครู");
       setRegClassLevel("ประถมศึกษาปีที่ 1");
       setRegTaughtSubject("");
@@ -229,14 +221,25 @@ function UserManagement() {
     return () => unsubscribe();
   }, []);
 
+  // ฟังชันสำหรับดึงรหัสนักเรียนและรหัสครูล่าสุดจาก Firestore
   useEffect(() => {
     const fetchCounter = async () => {
       const counterdoc = await getDoc(
         doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
       );
       if (counterdoc.exists()) {
-        setStudentID(counterdoc.data().lastStudentID + 1);
-        setTeacherID(counterdoc.data().lastTeacherID + 1);
+        const data = counterdoc.data();
+        if (
+          typeof data.lastStudentID === "number" &&
+          typeof data.lastTeacherID === "number"
+        ) {
+          setStudentID(data.lastStudentID + 1);
+          setTeacherID(data.lastTeacherID + 1);
+        } else {
+          console.log(
+            "Missing lastStudentID or lastTeacherID in counter document"
+          );
+        }
       } else {
         console.log("ไม่พบเอกสาร counter");
       }
@@ -246,131 +249,10 @@ function UserManagement() {
 
   return (
     <div className="shool-record-management-page">
-      <div className="nav">
-        <div className="logo-container" onClick={() => navigate("/")}>
-          <div className="logo-img">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="47"
-              height="46"
-              viewBox="0 0 47 46"
-              fill="none"
-            >
-              <ellipse cx="23.5" cy="23" rx="23.5" ry="23" fill="white" />
-            </svg>
-            <img src={logo} alt="logo" className="w-100 h-100" />
-          </div>
-          <div className="custom-h2">โรงเรียนบ้านแฮะ</div>
-        </div>
+      <Navbar />
 
-        <div className="menu-container">
-          {/* เมนู ทะเบียน */}
-          <div className="dropdown" ref={menuRef2}>
-            <div className="dropdown-trigger" onClick={() => setOpen2(!open2)}>
-              <div className="custom-h5">ทะเบียน</div>
-              <svg
-                className={`dropdown-icon ${open2 ? "rotate" : ""}`}
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-            <div
-              className={`dropdown-content ${open2 ? "active" : "inactive"}`}
-            >
-              <Link to="/profile">ข้อมูลส่วนตัว</Link>
-              <Link to="/usermanagement">จัดการข้อมูลผู้ใช้</Link>
-              <Link to="/subjects-management">จัดการรายวิชา</Link>
-              <Link to="/time-table-management">จัดการตารางเวลา</Link>
-              <Link to="/student-table-management">จัดการตารางเรียน</Link>
-              <Link to="/teacher-table-management">จัดการตารางสอน</Link>
-            </div>
-          </div>
-
-          {/* เมนู ประมวลผล */}
-          <div className="dropdown" ref={menuRef3}>
-            <div className="dropdown-trigger" onClick={() => setOpen3(!open3)}>
-              <div className="custom-h5">ประมวลผลการเรียน</div>
-              <svg
-                className={`dropdown-icon ${open3 ? "rotate" : ""}`}
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-            <div
-              className={`dropdown-content ${open3 ? "active" : "inactive"}`}
-            >
-              <Link to="/school-record-management">จัดการผลการเรียน</Link>
-            </div>
-          </div>
-
-          {/* เมนู คำร้อง */}
-          <div className="dropdown">
-            <div className="dropdown-trigger">
-              <div className="custom-h5">คำร้อง</div>
-              <svg
-                className="dropdown-icon"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* โปรไฟล์ */}
-        <div className="dropdown-container" ref={menuRef1}>
-          <div className="dropdown-trigger" onClick={() => setOpen1(!open1)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                fill="black"
-              />
-            </svg>
-            <div className="custom-h5">{firstName}</div>
-          </div>
-          <div className={`dropdown-menu-2 ${open1 ? "active" : "inactive"}`}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                fill="black"
-              />
-            </svg>
-            <div className="custom-h4">
-              {firstName} {lastName}
-            </div>
-            <button
-              className="logout-button"
-              type="button"
-              onClick={handleLogout}
-            >
-              <div className="custom-h5">ออกจากระบบ</div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="shool-record-management-detail p-4">
-        <Card className="shadow-lg rounded-4 w-100 h-100">
+      <div className="shool-record-management-detail page-detail p-4">
+        <Card className="shadow-lg rounded-4 w-100" style={{ minHeight: "80vh", height: "auto" }}>
           <Card.Body>
             <h3 className="d-flex justify-content-center w-100 my-2 fw-bold">
               จัดการข้อมูลผู้ใช้
@@ -390,6 +272,7 @@ function UserManagement() {
                   </Form.Select>
                 </div>
               </Col>
+
               {position === "นักเรียน" && (
                 <Col md={2}>
                   <div className="select-wrapper">
@@ -417,6 +300,14 @@ function UserManagement() {
                   </div>
                 </Col>
               )}
+              <Col className="d-flex justify-content-end">
+                <Button
+                  className="rounded-pill mt-2 edit-butt"
+                  onClick={handleShow}
+                >
+                  เพิ่มข้อมูลผู้ใช้
+                </Button>
+              </Col>
             </Row>
 
             <Row className="g-4 mb-4">
@@ -617,137 +508,144 @@ function UserManagement() {
               </Col>
             </Row>
 
-            <Row>
-              <Col md={5}>
-                <Card className="p-4 shadow-sm">
-                  <Card.Title className="fw-bold mb-3">
-                    เพิ่มข้อมูลผู้ใช้
-                  </Card.Title>
-                  {error && <div className="alert alert-danger">{error}</div>}
-                  <Form onSubmit={handleSubmit}>
-                    <Row className="mb-3">
-                      <Col>
-                        <div className="select-wrapper">
-                          <Form.Select
-                            value={regPosition}
-                            onChange={(e) => setRegPosition(e.target.value)}
-                            className="modern-select text-center"
-                          >
-                            <option value="ครู">ครู</option>
-                            <option value="นักเรียน">นักเรียน</option>
-                          </Form.Select>
-                        </div>
-                      </Col>
-                      <Col>
-                        {regPosition === "ครู" ? (
-                          <div className="select-wrapper">
-                            <Form.Select
-                              value={regtaughtSubject}
-                              onChange={(e) =>
-                                setRegTaughtSubject(e.target.value)
-                              }
-                              className="modern-select text-center"
-                            >
-                              <option value="" disabled>
-                                -- เลือกวิชาที่สอน --
-                              </option>
-                              {subjects.map((subject) => (
-                                <option key={subject.id} value={subject.id}>
-                                  {subject.id} {subject.name}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </div>
+            <Modal size="lg" show={show} onHide={handleClose}>
+              <Modal.Header closeButton>
+                <Modal.Title className="fw-bold">เพิ่มข้อมูลผู้ใช้</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                <Row>
+                  <Col>
+                    <Card className="p-4 shadow-sm">
+                      {error && (
+                        <div className="alert alert-danger">{error}</div>
+                      )}
+                      <Form onSubmit={handleSubmit}>
+                        <Row className="mb-3">
+                          <Col>
+                            <div className="select-wrapper">
+                              <Form.Select
+                                value={regPosition}
+                                onChange={(e) => setRegPosition(e.target.value)}
+                                className="modern-select text-center"
+                              >
+                                <option value="ครู">ครู</option>
+                                <option value="นักเรียน">นักเรียน</option>
+                              </Form.Select>
+                            </div>
+                          </Col>
+                          <Col>
+                            {regPosition === "ครู" ? (
+                              <div className="select-wrapper">
+                                <Form.Select
+                                  value={regtaughtSubject}
+                                  onChange={(e) =>
+                                    setRegTaughtSubject(e.target.value)
+                                  }
+                                  className="modern-select text-center"
+                                >
+                                  <option value="" disabled>
+                                    -- เลือกวิชาที่สอน --
+                                  </option>
+                                  {subjects.map((subject) => (
+                                    <option key={subject.id} value={subject.id}>
+                                      {subject.id} {subject.name}
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                              </div>
+                            ) : (
+                              <div className="select-wrapper">
+                                <Form.Select
+                                  value={regClassLevel}
+                                  onChange={(e) =>
+                                    setRegClassLevel(e.target.value)
+                                  }
+                                  className="modern-select text-center"
+                                >
+                                  <option value="" disabled>
+                                    -- เลือกชั้นเรียน --
+                                  </option>
+                                  {[
+                                    "ประถมศึกษาปีที่ 1",
+                                    "ประถมศึกษาปีที่ 2",
+                                    "ประถมศึกษาปีที่ 3",
+                                    "ประถมศึกษาปีที่ 4",
+                                    "ประถมศึกษาปีที่ 5",
+                                    "ประถมศึกษาปีที่ 6",
+                                  ].map((year) => (
+                                    <option key={year} value={year}>
+                                      {year}
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                              </div>
+                            )}
+                          </Col>
+                        </Row>
+
+                        {regPosition === "นักเรียน" ? (
+                          <Row className="mb-3">
+                            <Col md={6}>
+                              <Form.Control
+                                type="text"
+                                value={"รหัสประจำตัว : " + studentID}
+                                className="modern-input fw-bold"
+                                disabled
+                              />
+                            </Col>
+                          </Row>
                         ) : (
-                          <div className="select-wrapper">
-                            <Form.Select
-                              value={regClassLevel}
-                              onChange={(e) => setRegClassLevel(e.target.value)}
-                              className="modern-select text-center"
-                            >
-                              <option value="" disabled>
-                                -- เลือกชั้นเรียน --
-                              </option>
-                              {[
-                                "ประถมศึกษาปีที่ 1",
-                                "ประถมศึกษาปีที่ 2",
-                                "ประถมศึกษาปีที่ 3",
-                                "ประถมศึกษาปีที่ 4",
-                                "ประถมศึกษาปีที่ 5",
-                                "ประถมศึกษาปีที่ 6",
-                              ].map((year) => (
-                                <option key={year} value={year}>
-                                  {year}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </div>
+                          <Row className="mb-3">
+                            <Col md={6}>
+                              <Form.Control
+                                type="text"
+                                value={"รหัสประจำตัว : " + teacherID}
+                                className="modern-input fw-bold"
+                                disabled
+                              />
+                            </Col>
+                          </Row>
                         )}
-                      </Col>
-                    </Row>
 
-                    {regPosition === "นักเรียน" ? (
-                      <Row className="mb-3">
-                        <Col md={6}>
-                          <Form.Control
-                            type="text"
-                            value={"รหัสประจำตัว : " + studentID}
-                            className="modern-input fw-bold"
-                            disabled
-                          />
-                        </Col>
-                      </Row>
-                    ) : (
-                      <Row className="mb-3">
-                        <Col md={6}>
-                          <Form.Control
-                            type="text"
-                            value={"รหัสประจำตัว : " + teacherID}
-                            className="modern-input fw-bold"
-                            disabled
-                          />
-                        </Col>
-                      </Row>
-                    )}
-
-                    <Row className="mb-3">
-                      <Col>
-                        <Form.Control
-                          type="text"
-                          placeholder="ชื่อ"
-                          value={regFirstName}
-                          onChange={(e) => setRegFirstName(e.target.value)}
-                          className="modern-input"
-                        />
-                      </Col>
-                      <Col>
-                        <Form.Control
-                          type="text"
-                          placeholder="สกุล"
-                          value={regLastName}
-                          onChange={(e) => setRegLastName(e.target.value)}
-                          className="modern-input"
-                        />
-                      </Col>
-                    </Row>
-
-                    <Button
-                      type="submit"
-                      className="w-100 rounded-pill mt-2 edit-butt"
-                    >
-                      เพิ่มผู้ใช้งาน
-                    </Button>
-                  </Form>
-                </Card>
-              </Col>
-            </Row>
+                        <Row className="mb-3">
+                          <Col>
+                            <Form.Control
+                              type="text"
+                              placeholder="ชื่อ"
+                              value={regFirstName}
+                              onChange={(e) => setRegFirstName(e.target.value)}
+                              className="modern-input"
+                            />
+                          </Col>
+                          <Col>
+                            <Form.Control
+                              type="text"
+                              placeholder="สกุล"
+                              value={regLastName}
+                              onChange={(e) => setRegLastName(e.target.value)}
+                              className="modern-input"
+                            />
+                          </Col>
+                        </Row>
+                        <Modal.Footer className="d-flex justify-content-center">
+                          <Button
+                            className="rounded-pill mt-2 edit-butt"
+                            type="submit"
+                          >
+                            เพิ่มข้อมูลผู้ใช้
+                          </Button>
+                        </Modal.Footer>
+                      </Form>
+                    </Card>
+                  </Col>
+                </Row>
+              </Modal.Body>
+            </Modal>
           </Card.Body>
         </Card>
       </div>
 
-      <div className="footer">
-        <div className="custom-h3">ติดต่อเรา</div>
-      </div>
+      <Footer />
     </div>
   );
 }

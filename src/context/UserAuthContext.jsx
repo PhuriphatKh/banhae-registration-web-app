@@ -85,6 +85,7 @@ export function UserAuthContextProvider({ children }) {
           if (userDoc.exists()) {
             setFirstName(userDoc.data().user.firstName);
             setLastName(userDoc.data().user.lastName);
+            setUserRole(userDoc.data().user.position);
           } else {
             console.log("No such user document");
           }

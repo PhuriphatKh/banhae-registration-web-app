@@ -35,7 +35,7 @@ function Navbar() {
     open3: false,
   });
   const menuRefs = { menu1: useRef(), menu2: useRef(), menu3: useRef() };
-  const { logOut, user, firstName, lastName } = useUserAuth();
+  const { logOut, user, userRole, firstName, lastName } = useUserAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -88,23 +88,43 @@ function Navbar() {
       <div className="menu-container">
         <DropdownMenu
           label="ทะเบียน"
-          links={[
-            { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
-            { label: "จัดการข้อมูลผู้ใช้", path: "/usermanagement" },
-            { label: "จัดการรายวิชา", path: "/subjects-management" },
-            { label: "จัดการตารางเวลา", path: "/time-table-management" },
-            { label: "จัดการตารางเรียน", path: "/student-table-management" },
-            { label: "จัดการตารางสอน", path: "/teacher-table-management" },
-          ]}
+          links={
+            userRole === "admin"
+              ? [
+                  { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
+                  { label: "จัดการข้อมูลผู้ใช้", path: "/usermanagement" },
+                  { label: "จัดการรายวิชา", path: "/subjects-management" },
+                  { label: "จัดการตารางเวลา", path: "/time-table-management" },
+                  {
+                    label: "จัดการตารางเรียน",
+                    path: "/student-table-management",
+                  },
+                  {
+                    label: "จัดการตารางสอน",
+                    path: "/teacher-table-management",
+                  },
+                ]
+              : [
+                  { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
+                  { label: "ตารางสอน", path: `/teacher-table` },
+                ]
+          }
           open={dropdowns.open2}
           setOpen={(open) => setDropdowns({ ...dropdowns, open2: open })}
           menuRef={menuRefs.menu2}
         />
         <DropdownMenu
           label="ประมวลผลการเรียน"
-          links={[
-            { label: "จัดการผลการเรียน", path: "/school-record-management" },
-          ]}
+          links={
+            userRole === "admin"
+              ? [
+                  {
+                    label: "จัดการผลการเรียน",
+                    path: "/school-record-management",
+                  },
+                ]
+              : [{ label: "จัดการคะแนนรายวิชา", path: `/grade-management` }]
+          }
           open={dropdowns.open3}
           setOpen={(open) => setDropdowns({ ...dropdowns, open3: open })}
           menuRef={menuRefs.menu3}

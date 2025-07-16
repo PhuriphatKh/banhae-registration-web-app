@@ -25,6 +25,18 @@ input[type="number"]::-webkit-outer-spin-button {
   min-height: calc(100vh - 128px);
 }
 
+.page-detail-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+  background-color: #d9d9d9;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  min-height: calc(100vh - 160px);
+}
+
 .nav {
   display: flex;
   justify-content: space-between;
@@ -265,11 +277,14 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /* ---------------- ตารางสอน ------------------ */
 .timetable-box {
+  display: flex;
   background: #e0e0e0;
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
   border: 1px solid #aaa;
   border-radius: 12px;
   overflow: hidden;
+  width: 1200px;
+  height: 500px;
 }
 
 .timetable-header {

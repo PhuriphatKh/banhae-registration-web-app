@@ -32,7 +32,7 @@ function EditUserProfile() {
   const [regLastName, setRegLastName] = useState("");
   const [regPosition, setRegPosition] = useState("");
   const [regClassLevel, setRegClassLevel] = useState("");
-  const [regtaughtSubject, setRegTaughtSubject] = useState("");
+  const [regTaughtSubjects, setRegTaughtSubjects] = useState([""]);
   const [regBirthday, setRegBirthday] = useState("");
   const [regAge, setRegAge] = useState(0);
   const [regBornAt, setRegBornAt] = useState("");
@@ -183,8 +183,14 @@ function EditUserProfile() {
         setRegMonthlyIncome3(newData.parent?.monthlyIncome || "");
         setRegParentNum(newData.address?.parent?.parentNum || "");
 
-        setRegTaughtSubject(newData.user?.taughtSubject || "");
-        setPrevTaughtSubject(newData.user?.taughtSubject || "");
+        // รองรับ array หรือ string
+        if (Array.isArray(newData.user?.taughtSubject)) {
+          setRegTaughtSubjects(newData.user.taughtSubject);
+          setPrevTaughtSubject(newData.user.taughtSubject);
+        } else {
+          setRegTaughtSubjects([newData.user?.taughtSubject || ""]);
+          setPrevTaughtSubject([newData.user?.taughtSubject || ""]);
+        }
 
         console.log("ProfileData:", newData);
       }
@@ -624,7 +630,7 @@ function EditUserProfile() {
           lastName: regLastName,
           position: regPosition,
           classLevel: regClassLevel,
-          taughtSubject: regtaughtSubject,
+          taughtSubject: regTaughtSubjects,
           birthDate: regBirthday,
           ethnicity: regEthnicity,
           nationality: regNationality,
@@ -754,7 +760,6 @@ function EditUserProfile() {
 
       setFormData1(userProfile);
       setFormData2(userAddress);
-
       setShowModal(true);
 
       // บันทึกข้อมูลโปรไฟล์ลง Firestore
@@ -772,27 +777,55 @@ function EditUserProfile() {
   const handleConfirmSave = async () => {
     try {
       // ถ้าเปลี่ยนวิชาที่สอน ให้ลบ teacher ออกจากวิชาเดิม
-      if (prevTaughtSubject && prevTaughtSubject !== regtaughtSubject) {
-        await setDoc(
-          doc(db, "subjects", prevTaughtSubject),
-          { teacher: deleteField() },
-          { merge: true }
-        );
+      if (prevTaughtSubject && Array.isArray(prevTaughtSubject)) {
+        prevTaughtSubject.forEach(async (subjId) => {
+          if (!regTaughtSubjects.includes(subjId)) {
+        // ดึงข้อมูลวิชาเดิม
+        const subjDoc = await getDoc(doc(db, "subjects", subjId));
+        if (subjDoc.exists()) {
+          const teachersArr = Array.isArray(subjDoc.data().teachers)
+            ? subjDoc.data().teachers
+            : [];
+          // ลบ profileID ออกจาก array
+          const updatedTeachers = teachersArr.filter((id) => id !== profileID);
+          await setDoc(
+            doc(db, "subjects", subjId),
+            { teachers: updatedTeachers },
+            { merge: true }
+          );
+        }
+          }
+        });
       }
-
+      // เพิ่ม teacher ในวิชาใหม่
+      if (regTaughtSubjects && Array.isArray(regTaughtSubjects)) {
+        regTaughtSubjects.forEach(async (subjId) => {
+          if (subjId) {
+        const subjDoc = await getDoc(doc(db, "subjects", subjId));
+        let teachersArr = [];
+        if (subjDoc.exists()) {
+          teachersArr = Array.isArray(subjDoc.data().teachers)
+            ? subjDoc.data().teachers
+            : [];
+        }
+        // เพิ่ม profileID ถ้ายังไม่มี
+        if (!teachersArr.includes(profileID)) {
+          teachersArr.push(profileID);
+          await setDoc(
+            doc(db, "subjects", subjId),
+            { teachers: teachersArr },
+            { merge: true }
+          );
+        }
+          }
+        });
+      }
       // บันทึกข้อมูลใน Firestore
       await setDoc(doc(db, "profile", profileID), formData1, { merge: true });
       await setDoc(doc(db, "address", profileID), formData2, { merge: true });
-      await setDoc(
-        doc(db, "subjects", regtaughtSubject),
-        { teacher: profileID },
-        { merge: true }
-      );
-
       console.log("Data saved successfully!");
-
       setShowModal(false);
-      setPrevTaughtSubject(regtaughtSubject);
+      setPrevTaughtSubject(regTaughtSubjects);
     } catch (err) {
       setError(err.message);
       console.log(err);
@@ -964,19 +997,43 @@ function EditUserProfile() {
               {regPosition === "ครู" && (
                 <>
                   <Form.Label>วิชาที่สอน</Form.Label>
-                  <Form.Select
-                    value={regtaughtSubject}
-                    onChange={(e) => setRegTaughtSubject(e.target.value)}
-                  >
-                    <option value="" disabled>
-                      -- เลือกวิชาที่สอน --
-                    </option>
-                    {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.id} {subject.name}
-                      </option>
-                    ))}
-                  </Form.Select>
+                  {regTaughtSubjects.map((subjectId, idx) => (
+                    <div key={idx} className="d-flex align-items-center mb-2">
+                      <Form.Select
+                        value={subjectId}
+                        onChange={e => {
+                          const newArr = [...regTaughtSubjects];
+                          newArr[idx] = e.target.value;
+                          setRegTaughtSubjects(newArr);
+                        }}
+                      >
+                        <option value="" disabled>
+                          -- เลือกวิชาที่สอน --
+                        </option>
+                        {subjects.map((subject) => (
+                          <option key={subject.id} value={subject.id}>
+                            {subject.id} {subject.name}
+                          </option>
+                        ))}
+                      </Form.Select>
+                      {regTaughtSubjects.length > 1 && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="ms-2"
+                          onClick={() => {
+                            setRegTaughtSubjects(regTaughtSubjects.filter((_, i) => i !== idx));
+                          }}
+                        >ลบ</Button>
+                      )}
+                    </div>
+                  ))}
+                  <hr />
+                  <Button
+                    size="sm"
+                    className="edit-butt"
+                    onClick={() => setRegTaughtSubjects([...regTaughtSubjects, ""])}
+                  >เพิ่มวิชาที่สอน</Button>
                 </>
               )}
               {regPosition === "นักเรียน" && (

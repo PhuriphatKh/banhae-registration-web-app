@@ -194,14 +194,46 @@ function Profile() {
                     : "วิชาที่สอน"}
                 </th>
                 <td>
-                  {userInfo.position === "นักเรียน"
-                    ? userInfo.classLevel
-                    : Array.isArray(userInfo.taughtSubject)
-                    ? userInfo.taughtSubject.join(", ")
-                    : userInfo.taughtSubject || "-"}
-                  &nbsp;
-                  {subjects.find((s) => s.id === userInfo.taughtSubject)
-                    ?.name || "-"}
+                  <div className="d-flex">
+                    <div className="d-flex flex-column justify-content-center align-items-start w-50 h-100">
+                      {Array.isArray(userInfo?.taughtSubject)
+                        ? userInfo.taughtSubject.map((subjectId) => {
+                            const subject = subjects.find(
+                              (s) => s.id === subjectId
+                            );
+                            return (
+                              <div key={subjectId}>
+                                {subject
+                                  ? `${subject.id} ${subject.name}`
+                                  : "ไม่พบวิชา"}
+                              </div>
+                            );
+                          })
+                        : userInfo?.taughtSubject
+                        ? `${userInfo.taughtSubject.id} ${userInfo.taughtSubject.name}`
+                        : "-"}
+                    </div>
+                    <div className="d-flex flex-column justify-content-center align-items-start w-100 h-100">
+                      {Array.isArray(userInfo?.taughtSubject)
+                        ? userInfo.taughtSubject.map((subjectId) => {
+                            const subject = subjects.find(
+                              (s) => s.id === subjectId
+                            );
+                            return (
+                              <div
+                                key={subjectId}
+                              >
+                                {subject
+                                  ? subject.classLevel
+                                  : "ไม่พบชั้นเรียน"}
+                              </div>
+                            );
+                          })
+                        : subjects.find(
+                            (s) => s.id === userInfo?.taughtSubject
+                          )?.classLevel || "-"}
+                    </div>
+                  </div>
                 </td>
               </tr>
               <tr>

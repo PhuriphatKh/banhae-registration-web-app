@@ -37,6 +37,19 @@ input[type="number"]::-webkit-outer-spin-button {
   min-height: calc(100vh - 160px);
 }
 
+.student-page-detail-box {
+  padding: 20px;
+  gap: 20px;
+  background-color: #d9d9d9;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  min-height: 100vh;
+}
+
+#t-manage {
+  border-radius: 20px;
+}
+
 .nav {
   display: flex;
   justify-content: space-between;
@@ -221,6 +234,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .profile-detail {
   display: flex;
+  min-width: 1200px;
   padding: 30px 70px;
   justify-content: center;
 }
@@ -248,7 +262,6 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .shool-record-management-detail {
-
   display: flex;
   justify-content: center;
   align-items: center;

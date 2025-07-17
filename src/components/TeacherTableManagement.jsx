@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
 import { useTeacherTable } from "../context/TeacherTableContext";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
 import { Form, Alert, Button } from "react-bootstrap";
 import { db } from "../firebase";
 import { updateDoc, setDoc, doc, getDoc, onSnapshot } from "firebase/firestore";
@@ -78,12 +80,14 @@ function TeacherTableManagement() {
   useEffect(() => {
     if (!profileData) return;
 
-    const loadTeacher = profileData.find((item) => item.position === "ครู");
+    const loadTeacher = profileData.find(
+      (item) => item.user?.position === "ครู"
+    );
     if (loadTeacher) {
-      setRegTeacherName(loadTeacher.firstName + " " + loadTeacher.lastName);
+      setRegTeacherName(
+        loadTeacher.user.firstName + " " + loadTeacher.user.lastName
+      );
       setRegTeacherID(loadTeacher.id);
-
-      console.log("Teacher:", loadTeacher);
     }
   }, [profileData]);
 
@@ -171,31 +175,6 @@ function TeacherTableManagement() {
     }
   }, [teacherTableData, regTeacherID, regAcademicYear, regSemester]);
 
-  useEffect(() => {
-    let handler = (e) => {
-      if (!menuRef1.current.contains(e.target)) {
-        setOpen1(false);
-        console.log(menuRef1.current);
-      }
-
-      if (!menuRef2.current.contains(e.target)) {
-        setOpen2(false);
-        console.log(menuRef2.current);
-      }
-
-      if (!menuRef3.current.contains(e.target)) {
-        setOpen3(false);
-        console.log(menuRef3.current);
-      }
-    };
-
-    document.addEventListener("mousedown", handler);
-
-    return () => {
-      document.removeEventListener("mousedown", handler);
-    };
-  });
-
   const handleSave = async (e) => {
     e.preventDefault();
     setError("");
@@ -259,15 +238,6 @@ function TeacherTableManagement() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logOut();
-      navigate("/");
-    } catch (err) {
-      console.log(err.message);
-    }
-  };
-
   useEffect(() => {
     const unsubscribe = onSnapshot(
       doc(db, "time_table", "GnIYgvi6eieBMulTF8eK"),
@@ -290,130 +260,13 @@ function TeacherTableManagement() {
     return () => unsubscribe();
   }, []);
 
+  const filteredData = profileData.filter(
+    (item) => item.user?.position === "ครู"
+  );
+
   return (
     <div style={{ backgroundColor: "#BBBBBB" }}>
-      <div className="nav">
-        <div className="logo-container">
-          <div className="logo-img">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="47"
-              height="46"
-              viewBox="0 0 47 46"
-              fill="none"
-            >
-              <ellipse cx="23.5" cy="23" rx="23.5" ry="23" fill="white" />
-            </svg>
-            <img src={logo} alt="logo" className="w-100 h-100" />
-          </div>
-          <div className="custom-h2">โรงเรียนบ้านแฮะ</div>
-        </div>
-
-        <div className="menu-container">
-          {/* เมนู ทะเบียน */}
-          <div className="dropdown" ref={menuRef2}>
-            <div className="dropdown-trigger" onClick={() => setOpen2(!open2)}>
-              <div className="custom-h5">ทะเบียน</div>
-              <svg
-                className={`dropdown-icon ${open2 ? "rotate" : ""}`}
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-            <div
-              className={`dropdown-content ${open2 ? "active" : "inactive"}`}
-            >
-              <Link to="/profile">ข้อมูลส่วนตัว</Link>
-              <Link to="/usermanagement">จัดการข้อมูลผู้ใช้</Link>
-              <Link to="/subjects-management">จัดการรายวิชา</Link>
-              <Link to="/time-table-management">จัดการตารางเวลา</Link>
-              <Link to="/student-table-management">จัดการตารางเรียน</Link>
-              <Link to="/teacher-table-management">จัดการตารางสอน</Link>
-            </div>
-          </div>
-
-          {/* เมนู ประมวลผล */}
-          <div className="dropdown" ref={menuRef3}>
-            <div className="dropdown-trigger" onClick={() => setOpen3(!open3)}>
-              <div className="custom-h5">ประมวลผลการเรียน</div>
-              <svg
-                className={`dropdown-icon ${open3 ? "rotate" : ""}`}
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-            <div
-              className={`dropdown-content ${open3 ? "active" : "inactive"}`}
-            >
-              <Link to="/school-record-management">จัดการผลการเรียน</Link>
-            </div>
-          </div>
-
-          {/* เมนู คำร้อง */}
-          <div className="dropdown">
-            <div className="dropdown-trigger">
-              <div className="custom-h5">คำร้อง</div>
-              <svg
-                className="dropdown-icon"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* โปรไฟล์ */}
-        <div className="dropdown-container" ref={menuRef1}>
-          <div className="dropdown-trigger" onClick={() => setOpen1(!open1)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                fill="black"
-              />
-            </svg>
-            <div className="custom-h5">{firstName}</div>
-          </div>
-          <div className={`dropdown-menu-2 ${open1 ? "active" : "inactive"}`}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                fill="black"
-              />
-            </svg>
-            <div className="custom-h4">
-              {firstName} {lastName}
-            </div>
-            <button
-              className="logout-button"
-              type="button"
-              onClick={handleLogout}
-            >
-              <div className="custom-h5">ออกจากระบบ</div>
-            </button>
-          </div>
-        </div>
-      </div>
+      <Navbar />
 
       <div className="p-2" style={{ height: "1000px" }}>
         <div className="d-flex h-100">
@@ -429,9 +282,9 @@ function TeacherTableManagement() {
               >
                 <div className="d-flex align-items-center ps-2 gap-2 w-100">
                   ตัวเลือก
-                  <div class="custom-select">
-                    <select
-                      className="text-center"
+                  <div class="select-wrapper">
+                    <Form.Select
+                      className="text-center modern-select"
                       style={{ width: "300px" }}
                       value={regTeacherID}
                       onChange={(e) => {
@@ -442,9 +295,9 @@ function TeacherTableManagement() {
                           (profile) => profile.id === selectedId
                         );
 
-                        if (selectedProfile) {
+                        if (selectedProfile && selectedProfile.user) {
                           setRegTeacherName(
-                            `${selectedProfile.firstName} ${selectedProfile.lastName}`
+                            `${selectedProfile.user.firstName} ${selectedProfile.user.lastName}`
                           );
                         }
                       }}
@@ -452,19 +305,20 @@ function TeacherTableManagement() {
                       <option value="" disabled>
                         -- คุณครู --
                       </option>
-                      {profileData &&
-                        profileData
-                          .filter((profile) => profile.position === "ครู")
-                          .map((profile, index) => (
-                            <option key={index} value={profile.id}>
-                              {`${profile.firstName} ${profile.lastName}`}
-                            </option>
-                          ))}
-                    </select>
+                      {filteredData
+                        .sort((a, b) =>
+                          a.user.teacherID > b.user.teacherID ? 1 : -1
+                        )
+                        .map((profile) => (
+                          <option key={profile.id} value={profile.id}>
+                            {profile.user.firstName} {profile.user.lastName}
+                          </option>
+                        ))}
+                    </Form.Select>
                   </div>
-                  <div class="custom-select">
-                    <select
-                      className="text-center"
+                  <div class="select-wrapper">
+                    <Form.Select
+                      className="modern-select text-center"
                       style={{ width: "180px" }}
                       value={regAcademicYear}
                       onChange={(e) =>
@@ -476,11 +330,11 @@ function TeacherTableManagement() {
                       </option>
                       <option value="2567">ปีการศึกษา 2567</option>
                       <option value="2568">ปีการศึกษา 2568</option>
-                    </select>
+                    </Form.Select>
                   </div>
-                  <div class="custom-select">
-                    <select
-                      className="text-center"
+                  <div class="select-wrapper">
+                    <Form.Select
+                      className="modern-select text-center"
                       style={{ width: "150px" }}
                       value={regSemester}
                       onChange={(e) => setRegSemester(Number(e.target.value))}
@@ -490,7 +344,7 @@ function TeacherTableManagement() {
                       </option>
                       <option value="1">ภาคเรียนที่ 1</option>
                       <option value="2">ภาคเรียนที่ 2</option>
-                    </select>
+                    </Form.Select>
                   </div>
                 </div>
                 <div className="d-flex align-items-start border border-black w-100 h-100">
@@ -1787,9 +1641,7 @@ function TeacherTableManagement() {
         </div>
       </div>
 
-      <div className="footer w-100">
-        <div className="custom-h3">ติดต่อเรา</div>
-      </div>
+      <Footer />
     </div>
   );
 }

@@ -21,8 +21,10 @@ import Footer from "./Footer";
 function SubjectsManagement() {
   const [regClassLevel, setRegClassLevel] = useState("ประถมศึกษาปีที่ 1");
   const [subjects, setSubjects] = useState([]);
-  const [regSubjectName, setRegSubjectName] = useState("");
+
   const [regSubjectID, setRegSubjectID] = useState("");
+  const [regSubjectName, setRegSubjectName] = useState("");
+  const [regSubjectGroup, setRegSubjectGroup] = useState("");
 
   const [studentClass, setStudentClass] = useState("ประถมศึกษาปีที่ 1");
 
@@ -31,6 +33,7 @@ function SubjectsManagement() {
   const [editIndex, setEditIndex] = useState(null);
   const [editSubjectID, setEditSubjectID] = useState("");
   const [editSubjectName, setEditSubjectName] = useState("");
+  const [editSubjectGroup, setEditSubjectGroup] = useState("");
 
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
@@ -60,6 +63,7 @@ function SubjectsManagement() {
     try {
       await setDoc(doc(db, "subjects", regSubjectID), {
         name: regSubjectName,
+        subjectGroup: regSubjectGroup,
         classLevel: regClassLevel,
       });
 
@@ -79,8 +83,9 @@ function SubjectsManagement() {
 
   const handleEdit = (index, subject) => {
     setEditIndex(index);
-    setEditSubjectID(subject.id);
-    setEditSubjectName(subject.name);
+    setEditSubjectID(subject.id || "");
+    setEditSubjectName(subject.name || "");
+    setEditSubjectGroup(subject.subjectGroup || "");
   };
 
   const handleSave = async (oldId) => {
@@ -90,6 +95,7 @@ function SubjectsManagement() {
         // 1. สร้าง doc ใหม่ด้วย id ใหม่
         await setDoc(doc(db, "subjects", editSubjectID), {
           name: editSubjectName,
+          subjectGroup: editSubjectGroup,
           classLevel: subjects.find((s) => s.id === oldId)?.classLevel || "",
           teacher: subjects.find((s) => s.id === oldId)?.teacher || "",
         });
@@ -99,6 +105,7 @@ function SubjectsManagement() {
         // ถ้า id ไม่เปลี่ยน อัปเดตชื่อปกติ
         await updateDoc(doc(db, "subjects", oldId), {
           name: editSubjectName,
+          subjectGroup: editSubjectGroup,
         });
       }
       setEditIndex(null);
@@ -140,7 +147,10 @@ function SubjectsManagement() {
       <Navbar />
 
       <div className="shool-record-management-detail page-detail p-4">
-        <Card className="shadow-lg rounded-4 w-100" style={{ minHeight: "80vh", height: "auto" }}>
+        <Card
+          className="shadow-lg rounded-4 w-100"
+          style={{ minHeight: "80vh", height: "auto" }}
+        >
           <Card.Body>
             <h3 className="d-flex justify-content-center w-100 my-2 fw-bold">
               จัดการรายวิชา
@@ -194,10 +204,11 @@ function SubjectsManagement() {
                       style={{ position: "sticky", top: 0, zIndex: 2 }}
                     >
                       <tr>
-                        <th style={{ width: "25%" }}>รหัสวิชา</th>
-                        <th style={{ width: "25%" }}>รายวิชา</th>
-                        <th style={{ width: "25%" }}>ครูผู้สอน</th>
-                        <th style={{ width: "25%" }}>ตัวเลือก</th>
+                        <th style={{ width: "20%" }}>รหัสวิชา</th>
+                        <th style={{ width: "20%" }}>รายวิชา</th>
+                        <th style={{ width: "20%" }}>กลุ่มสาระการเรียนรู้</th>
+                        <th style={{ width: "20%" }}>ครูผู้สอน</th>
+                        <th style={{ width: "20%" }}>ตัวเลือก</th>
                       </tr>
                     </thead>
                   </table>
@@ -239,7 +250,23 @@ function SubjectsManagement() {
                                         className="text-center"
                                       />
                                     ) : (
-                                      subject.name
+                                      subject.name || "-"
+                                    )}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
+                                    {index === editIndex ? (
+                                      <Form.Control
+                                        type="text"
+                                        value={editSubjectGroup}
+                                        onChange={(e) =>
+                                          setEditSubjectGroup(e.target.value)
+                                        }
+                                        className="text-center"
+                                      />
+                                    ) : (
+                                      subject.subjectGroup || "-"
                                     )}
                                   </div>
                                 </td>
@@ -373,6 +400,17 @@ function SubjectsManagement() {
                               onChange={(e) =>
                                 setRegSubjectName(e.target.value)
                               }
+                            />
+                          </Col>
+                        </Row>
+                        <Row className="mb-3">
+                          <Col>
+                            <Form.Control
+                              type="text"
+                              placeholder="กลุ่มสาระการเรียนรู้"
+                              className="modern-input"
+                              value={regSubjectGroup}
+                              onChange={(e) => setRegSubjectGroup(e.target.value)}
                             />
                           </Col>
                         </Row>

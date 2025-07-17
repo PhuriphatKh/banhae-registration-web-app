@@ -23,7 +23,7 @@ function UserManagement() {
   const [regLastName, setRegLastName] = useState("");
   const [regPosition, setRegPosition] = useState("ครู");
   const [regClassLevel, setRegClassLevel] = useState("ประถมศึกษาปีที่ 1");
-  const [regtaughtSubject, setRegTaughtSubject] = useState("");
+  const [regtaughtSubject, setRegTaughtSubject] = useState([""]);
   const [subjects, setSubjects] = useState([]);
 
   const [position, setPosition] = useState("ครู");
@@ -264,8 +264,8 @@ function UserManagement() {
                 <div className="select-wrapper">
                   <Form.Select
                     value={position}
-                    onChange={(e) => setPosition(e.target.value)}
                     className="modern-select text-center"
+                    onChange={(e) => setPosition(e.target.value)}
                   >
                     <option value="ครู">ครู</option>
                     <option value="นักเรียน">นักเรียน</option>
@@ -300,6 +300,7 @@ function UserManagement() {
                   </div>
                 </Col>
               )}
+              
               <Col className="d-flex justify-content-end">
                 <Button
                   className="rounded-pill mt-2 edit-butt"
@@ -387,11 +388,24 @@ function UserManagement() {
                                       navigate(`/profile?id=${item.id}`)
                                     }
                                   >
-                                    <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
-                                      {item.user?.taughtSubject || "-"}{" "}
-                                      {subjects.find(
-                                        (s) => s.id === item.user?.taughtSubject
-                                      )?.name || "-"}
+                                    <div className="d-flex flex-column justify-content-center align-items-start w-100 h-100 py-2">
+                                      {Array.isArray(item.user?.taughtSubject)
+                                        ? item.user.taughtSubject.map((subjectId) => {
+                                            const subject = subjects.find(
+                                              (s) => s.id === subjectId
+                                            );
+                                            return (
+                                              <div key={subjectId} className="border-bottom border-top border-black w-100 mt-1">
+                                                {subject
+                                                  ? `${subject.id} ${subject.name}`
+                                                  : "ไม่พบวิชา"}
+                                              </div>
+                                            );
+                                          }
+                                        )
+                                        : item.user?.taughtSubject
+                                          ? `${item.user.taughtSubject.id} ${item.user.taughtSubject.name}`
+                                          : "-"}
                                     </div>
                                   </td>
                                   <td
@@ -400,14 +414,28 @@ function UserManagement() {
                                       navigate(`/profile?id=${item.id}`)
                                     }
                                   >
-                                    <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
-                                      {subjects.find(
-                                        (s) => s.id === item.user?.taughtSubject
-                                      )?.classLevel || "-"}
+                                    <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100 py-2">
+                                      {Array.isArray(item.user?.taughtSubject)
+                                        ? item.user.taughtSubject
+                                            .map((subjectId) => {
+                                              const subject = subjects.find(
+                                                (s) => s.id === subjectId
+                                              );
+                                              return (
+                                                <div key={subjectId} className="border-bottom border-top border-black w-100 mt-1">
+                                                  {subject
+                                                    ? subject.classLevel
+                                                    : "ไม่พบชั้นเรียน"}
+                                                </div>
+                                              )
+                                            })
+                                        : subjects.find(
+                                            (s) => s.id === item.user?.taughtSubject
+                                          )?.classLevel || "-"}
                                     </div>
                                   </td>
                                   <td style={{ width: "20%" }}>
-                                    <div className="d-flex justify-content-center gap-2">
+                                    <div className="d-flex justify-content-center gap-2 align-items-center w-100 h-100">
                                       <Button
                                         className="edit-butt"
                                         size="sm"
@@ -539,7 +567,7 @@ function UserManagement() {
                                 <Form.Select
                                   value={regtaughtSubject}
                                   onChange={(e) =>
-                                    setRegTaughtSubject(e.target.value)
+                                    setRegTaughtSubject([e.target.value])
                                   }
                                   className="modern-select text-center"
                                 >

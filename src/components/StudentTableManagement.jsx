@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useStudentTable } from "../context/StudentTableContex";
+import { Form } from "react-bootstrap";
 import { db } from "../firebase";
-import { doc, setDoc, onSnapshot, collection } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, query, where, collection } from "firebase/firestore";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
@@ -266,26 +267,25 @@ function StudentTableManagement() {
 
   // โหลดวิชาจาก Firestore
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "subjects"), (snapshot) => {
+    const q = query(collection(db, "subjects"), where("classLevel", "==", regClassLevel));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const newData = [];
       snapshot.forEach((doc) => {
         newData.push({ id: doc.id, ...doc.data() });
       });
-      if (newData.length === 0) return;
-
       setSubjects(newData);
       console.log("Subjects updated:", newData);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [regClassLevel]);
 
   return (
     <div style={{ backgroundColor: "#BBBBBB" }}>
       <Navbar />
 
-      <div className="p-2" style={{ height: "1000px" }}>
-        <div className="d-flex h-100">
+      <div className="p-3 page-detail">
+        <div className="d-flex student-page-detail-box">
           <div className="p-2" style={{ width: "40%" }}>
             <div className="d-flex flex-column w-100 h-100 gap-1">
               <div className="custom-h2 d-flex justify-content-center fw-bold">
@@ -294,14 +294,15 @@ function StudentTableManagement() {
               <form
                 onSubmit={handleSave}
                 className="d-flex flex-column align-items-center p-2 gap-2 h-100"
+                id="t-manage"
                 style={{ backgroundColor: "white" }}
               >
                 <div className="d-flex align-items-center ps-2 gap-2 w-100">
                   ตัวเลือก
-                  <div className="custom-select">
-                    <select
-                      className="text-center"
-                      style={{ width: "200px", backgroundColor: "#BBBBBB" }}
+                  <div className="select-wrapper">
+                    <Form.Select
+                      className="modern-select text-center"
+                      style={{ minWidth: "200px" }}
                       onChange={(e) => setRegClassLevel(e.target.value)}
                     >
                       <option value="" disabled>
@@ -312,11 +313,11 @@ function StudentTableManagement() {
                           {classItem}
                         </option>
                       ))}
-                    </select>
+                    </Form.Select>
                   </div>
-                  <div className="custom-select">
-                    <select
-                      className="text-center"
+                  <div className="select-wrapper">
+                    <Form.Select
+                      className="text-center modern-select"
                       style={{ width: "200px" }}
                       value={regAcademicYear}
                       onChange={(e) =>
@@ -331,11 +332,11 @@ function StudentTableManagement() {
                           ปีการศึกษา {year}
                         </option>
                       ))}
-                    </select>
+                    </Form.Select>
                   </div>
-                  <div className="custom-select">
-                    <select
-                      className="text-center"
+                  <div className="select-wrapper">
+                    <Form.Select
+                      className="text-center modern-select"
                       style={{ width: "200px" }}
                       value={regSemester}
                       onChange={(e) => setRegSemester(Number(e.target.value))}
@@ -348,7 +349,7 @@ function StudentTableManagement() {
                           ภาคเรียนที่ {sem}
                         </option>
                       ))}
-                    </select>
+                    </Form.Select>
                   </div>
                 </div>
                 <div className="d-flex align-items-start border border-black w-100 h-100">

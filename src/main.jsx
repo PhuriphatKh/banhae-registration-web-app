@@ -13,8 +13,8 @@ import StudentTableManagement from "./components/StudentTableManagement.jsx";
 import TeacherTableManagement from "./components/TeacherTableManagement.jsx";
 import SchoolRecordManagement from "./components/SchoolRecordManagement.jsx";
 import TeacherTable from "./components/TeacherTable.jsx";
+import StudentTable from "./components/StudentTable.jsx";
 import GradeManagement from "./components/GradeManagement.jsx";
-import GradeManagementStudent from "./components/GradeManagementStudent.jsx";
 import EditUserProfile from "./components/EditUserProfile.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import AdminRoute from "./auth/AdminRoute.jsx";
@@ -57,6 +57,14 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: "/student-table",
+    element: (
+      <ProtectedRoute>
+        <StudentTable />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: "/home/ครู",
     element: (
       <ProtectedRoute>
@@ -77,14 +85,6 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <GradeManagement />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/grade-management/student",
-    element: (
-      <ProtectedRoute>
-        <GradeManagementStudent />
       </ProtectedRoute>
     ),
   },

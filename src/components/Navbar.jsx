@@ -81,7 +81,7 @@ function Navbar() {
           </svg>
           <img src={logo} alt="logo" className="w-100 h-100" />
         </div>
-        <div className="custom-h2">โรงเรียนบ้านแฮะ</div>
+        <div className="custom-h2 school-name">โรงเรียนบ้านแฮะ</div>
       </div>
 
       {/* Menu */}
@@ -104,9 +104,14 @@ function Navbar() {
                     path: "/teacher-table-management",
                   },
                 ]
-              : [
+              : userRole === "ครู"
+              ? [
                   { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
                   { label: "ตารางสอน", path: `/teacher-table` },
+                ]
+              : [
+                  { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
+                  { label: "ตารางเรียน", path: `/student-table` },
                 ]
           }
           open={dropdowns.open2}
@@ -123,7 +128,9 @@ function Navbar() {
                     path: "/school-record-management",
                   },
                 ]
-              : [{ label: "จัดการคะแนนรายวิชา", path: `/grade-management` }]
+              : userRole === "ครู"
+              ? [{ label: "จัดการคะแนนรายวิชา", path: `/grade-management` }]
+              : [{ label: "ผลการเรียน", path: `/school-record` }]
           }
           open={dropdowns.open3}
           setOpen={(open) => setDropdowns({ ...dropdowns, open3: open })}

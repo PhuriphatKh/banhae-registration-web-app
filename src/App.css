@@ -17,6 +17,27 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
+@media (max-width: 640px) {
+  .menu-container,
+  .school-name {
+    display: none !important;
+  }
+
+  .nav {
+    padding: 0 !important;
+  }
+
+  .logo-img {
+    align-items: flex-start;
+    margin-left: 10px;
+  }
+
+  .dropdown-container {
+    align-items: flex-end;
+    margin-right: 10px;
+  }
+}
+
 .page {
   min-height: 100vh;
 }

@@ -1,0 +1,21 @@
+.grade-table table {
+  width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border-collapse: collapse;
+}
+
+.grade-table th {
+  cursor: default;
+  background-color: antiquewhite;
+}
+
+.grade-table th,
+.grade-table td {
+  padding: 12px 15px;
+}
+
+.grade-table tr:hover {
+  cursor: pointer;
+  background-color: #f1f1f1;
+}

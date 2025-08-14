@@ -1,0 +1,44 @@
+.subject-scores-table table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  overflow: hidden; /* กันไม่ให้มุมโค้งโดนบัง */
+}
+
+.subject-scores-table th {
+  border: 1px solid #ddd;
+  padding: 12px 15px;
+}
+
+.subject-scores-table td {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  padding: 12px 15px;
+}
+
+.subject-scores-table th {
+  background-color: antiquewhite;
+}
+
+.subject-scores-table tr.selected {
+    background-color: #f1f1f1;
+}
+
+/* โค้งเฉพาะมุมจริง */
+.subject-scores-table thead tr:first-child th:first-child {
+  border-top-left-radius: 20px;
+}
+
+.subject-scores-table thead tr:first-child th:last-child {
+  border-top-right-radius: 20px;
+}
+
+.subject-scores-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 20px;
+}
+
+.subject-scores-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 20px;
+}

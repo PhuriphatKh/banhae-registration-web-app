@@ -280,71 +280,73 @@ function TeacherTableManagement() {
                 className="d-flex flex-column align-items-center p-2 gap-2 h-100"
                 style={{ backgroundColor: "white" }}
               >
-                <div className="d-flex align-items-center ps-2 gap-2 w-100">
-                  ตัวเลือก
-                  <div class="select-wrapper">
-                    <Form.Select
-                      className="text-center modern-select"
-                      style={{ width: "300px" }}
-                      value={regTeacherID}
-                      onChange={(e) => {
-                        const selectedId = e.target.value;
-                        setRegTeacherID(selectedId);
+                <div className="d-flex flex-column align-items-center ps-2 gap-2 w-100">
+                  <div className="custom-h3">ตัวเลือก</div>
+                  <div className="d-flex w-100 gap-2">
+                    <div className="select-wrapper" style={{ width: "33.33%" }}>
+                      <Form.Select
+                        className="text-center modern-select"
+                        style={{ fontSize: "0.8vw", height: "3rem" }}
+                        value={regTeacherID}
+                        onChange={(e) => {
+                          const selectedId = e.target.value;
+                          setRegTeacherID(selectedId);
 
-                        const selectedProfile = profileData.find(
-                          (profile) => profile.id === selectedId
-                        );
-
-                        if (selectedProfile && selectedProfile.user) {
-                          setRegTeacherName(
-                            `${selectedProfile.user.firstName} ${selectedProfile.user.lastName}`
+                          const selectedProfile = profileData.find(
+                            (profile) => profile.id === selectedId
                           );
+
+                          if (selectedProfile && selectedProfile.user) {
+                            setRegTeacherName(
+                              `${selectedProfile.user.firstName} ${selectedProfile.user.lastName}`
+                            );
+                          }
+                        }}
+                      >
+                        <option value="" disabled>
+                          -- คุณครู --
+                        </option>
+                        {filteredData
+                          .sort((a, b) =>
+                            a.user.teacherID > b.user.teacherID ? 1 : -1
+                          )
+                          .map((profile) => (
+                            <option key={profile.id} value={profile.id}>
+                              {profile.user.firstName} {profile.user.lastName}
+                            </option>
+                          ))}
+                      </Form.Select>
+                    </div>
+                    <div class="select-wrapper" style={{ width: "33.33%" }}>
+                      <Form.Select
+                        className="modern-select text-center"
+                        style={{ fontSize: "0.8vw", height: "3rem" }}
+                        value={regAcademicYear}
+                        onChange={(e) =>
+                          setRegAcademicYear(Number(e.target.value))
                         }
-                      }}
-                    >
-                      <option value="" disabled>
-                        -- คุณครู --
-                      </option>
-                      {filteredData
-                        .sort((a, b) =>
-                          a.user.teacherID > b.user.teacherID ? 1 : -1
-                        )
-                        .map((profile) => (
-                          <option key={profile.id} value={profile.id}>
-                            {profile.user.firstName} {profile.user.lastName}
-                          </option>
-                        ))}
-                    </Form.Select>
-                  </div>
-                  <div class="select-wrapper">
-                    <Form.Select
-                      className="modern-select text-center"
-                      style={{ width: "180px" }}
-                      value={regAcademicYear}
-                      onChange={(e) =>
-                        setRegAcademicYear(Number(e.target.value))
-                      }
-                    >
-                      <option value="" disabled>
-                        -- ปีการศึกษา --
-                      </option>
-                      <option value="2567">ปีการศึกษา 2567</option>
-                      <option value="2568">ปีการศึกษา 2568</option>
-                    </Form.Select>
-                  </div>
-                  <div class="select-wrapper">
-                    <Form.Select
-                      className="modern-select text-center"
-                      style={{ width: "150px" }}
-                      value={regSemester}
-                      onChange={(e) => setRegSemester(Number(e.target.value))}
-                    >
-                      <option value="" disabled>
-                        -- ภาคเรียนที่ --
-                      </option>
-                      <option value="1">ภาคเรียนที่ 1</option>
-                      <option value="2">ภาคเรียนที่ 2</option>
-                    </Form.Select>
+                      >
+                        <option value="" disabled>
+                          -- ปีการศึกษา --
+                        </option>
+                        <option value="2567">ปีการศึกษา 2567</option>
+                        <option value="2568">ปีการศึกษา 2568</option>
+                      </Form.Select>
+                    </div>
+                    <div class="select-wrapper" style={{ width: "33.33%" }}>
+                      <Form.Select
+                        className="modern-select text-center"
+                        style={{ fontSize: "0.8vw", height: "3rem" }}
+                        value={regSemester}
+                        onChange={(e) => setRegSemester(Number(e.target.value))}
+                      >
+                        <option value="" disabled>
+                          -- ภาคเรียนที่ --
+                        </option>
+                        <option value="1">ภาคเรียนที่ 1</option>
+                        <option value="2">ภาคเรียนที่ 2</option>
+                      </Form.Select>
+                    </div>
                   </div>
                 </div>
                 <div className="d-flex align-items-start border border-black w-100 h-100">

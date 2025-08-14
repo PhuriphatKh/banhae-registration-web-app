@@ -15,6 +15,7 @@ import SchoolRecordManagement from "./components/SchoolRecordManagement.jsx";
 import TeacherTable from "./components/TeacherTable.jsx";
 import StudentTable from "./components/StudentTable.jsx";
 import GradeManagement from "./components/GradeManagement.jsx";
+import ManageSubjectScores from "./components/ManageSubjectScores.jsx";
 import EditUserProfile from "./components/EditUserProfile.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import AdminRoute from "./auth/AdminRoute.jsx";
@@ -85,6 +86,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <GradeManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/grade-management/subject",
+    element: (
+      <ProtectedRoute>
+        <ManageSubjectScores />
       </ProtectedRoute>
     ),
   },

@@ -4,7 +4,14 @@ import { useUserAuth } from "../context/UserAuthContext";
 import { useStudentTable } from "../context/StudentTableContex";
 import { Form } from "react-bootstrap";
 import { db } from "../firebase";
-import { doc, setDoc, onSnapshot, query, where, collection } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  onSnapshot,
+  query,
+  where,
+  collection,
+} from "firebase/firestore";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
@@ -37,6 +44,62 @@ function StudentTableManagement() {
   const [regSemester, setRegSemester] = useState(1);
 
   const [subjects, setSubjects] = useState([]);
+
+  // uid ครู -> ชื่อที่ใช้แสดง
+  const [teachersMap, setTeachersMap] = useState({});
+
+  // ช่วยให้ค้นหา subject จาก id ได้ O(1)
+  const subjectById = React.useMemo(
+    () => new Map(subjects.map((s) => [s.id, s])),
+    [subjects]
+  );
+
+  // โหลดชื่อครูจาก Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "profile"), (snap) => {
+      const map = {};
+      snap.forEach((doc) => {
+        const d = doc.data();
+        const first = d?.user?.firstName ?? d?.firstName ?? "";
+        const display = first || last ? `${first}`.trim() : "(ไม่มีชื่อ)";
+        map[doc.id] = display;
+      });
+      setTeachersMap(map);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // ฟังก์ชันช่วยแปลง uid ของครูเป็นชื่อที่แสดง
+  // ใช้ใน getSubjectDisplay เพื่อแสดงชื่อครูในตาราง
+  // ถ้า uid ไม่พบใน teachersMap จะใช้ uid แทน
+  const getTeacherNames = (uids = []) =>
+    uids.map((uid) => teachersMap[uid] || uid).join(", ");
+
+  const formatSubjectName = (name) => {
+    if (!name) return "";
+    return name.split(" ").map((word, idx) => <div key={idx}>{word}</div>);
+  };
+
+  const getSubjectDisplay = (subjectId) => {
+    if (!subjectId || subjectId === "-") return "-";
+    const subject = subjects.find((s) => s.id === subjectId);
+    if (!subject) return subjectId;
+
+    return (
+      <>
+        <div style={{ fontSize: "0.6vw" }}>{subject.id}</div>
+        <div
+          className="d-flex flex-column align-items-center"
+          style={{ fontSize: "0.6vw" }}
+        >
+          {formatSubjectName(subject.name)}
+        </div>
+        <div style={{ fontSize: "0.6vw" }}>
+          {getTeacherNames(subject.teachers || [])}
+        </div>
+      </>
+    );
+  };
 
   const [regMon0830, setRegMon0830] = useState("-");
   const [regMon0930, setRegMon0930] = useState("-");
@@ -267,7 +330,10 @@ function StudentTableManagement() {
 
   // โหลดวิชาจาก Firestore
   useEffect(() => {
-    const q = query(collection(db, "subjects"), where("classLevel", "==", regClassLevel));
+    const q = query(
+      collection(db, "subjects"),
+      where("classLevel", "==", regClassLevel)
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const newData = [];
       snapshot.forEach((doc) => {
@@ -297,59 +363,61 @@ function StudentTableManagement() {
                 id="t-manage"
                 style={{ backgroundColor: "white" }}
               >
-                <div className="d-flex align-items-center ps-2 gap-2 w-100">
-                  ตัวเลือก
-                  <div className="select-wrapper">
-                    <Form.Select
-                      className="modern-select text-center"
-                      style={{ minWidth: "200px" }}
-                      onChange={(e) => setRegClassLevel(e.target.value)}
-                    >
-                      <option value="" disabled>
-                        -- เลือกชั้นเรียน --
-                      </option>
-                      {classTable.map((classItem) => (
-                        <option key={classItem} value={classItem}>
-                          {classItem}
+                <div className="d-flex flex-column align-items-center ps-2 gap-2 w-100">
+                  <div className="custom-h3">ตัวเลือก</div>
+                  <div className="d-flex w-100 gap-2">
+                    <div className="select-wrapper" style={{ width: "33.33%" }}>
+                      <Form.Select
+                        className="modern-select text-center"
+                        style={{ fontSize: "0.8vw", height: "3rem" }}
+                        onChange={(e) => setRegClassLevel(e.target.value)}
+                      >
+                        <option value="" disabled>
+                          -- เลือกชั้นเรียน --
                         </option>
-                      ))}
-                    </Form.Select>
-                  </div>
-                  <div className="select-wrapper">
-                    <Form.Select
-                      className="text-center modern-select"
-                      style={{ width: "200px" }}
-                      value={regAcademicYear}
-                      onChange={(e) =>
-                        setRegAcademicYear(Number(e.target.value))
-                      }
-                    >
-                      <option value="" disabled>
-                        -- ปีการศึกษา --
-                      </option>
-                      {academicYear.map((year) => (
-                        <option key={year} value={year}>
-                          ปีการศึกษา {year}
+                        {classTable.map((classItem) => (
+                          <option key={classItem} value={classItem}>
+                            {classItem}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
+                    <div className="select-wrapper" style={{ width: "33.33%" }}>
+                      <Form.Select
+                        className="text-center modern-select"
+                        style={{ fontSize: "0.8vw", height: "3rem" }}
+                        value={regAcademicYear}
+                        onChange={(e) =>
+                          setRegAcademicYear(Number(e.target.value))
+                        }
+                      >
+                        <option value="" disabled>
+                          -- ปีการศึกษา --
                         </option>
-                      ))}
-                    </Form.Select>
-                  </div>
-                  <div className="select-wrapper">
-                    <Form.Select
-                      className="text-center modern-select"
-                      style={{ width: "200px" }}
-                      value={regSemester}
-                      onChange={(e) => setRegSemester(Number(e.target.value))}
-                    >
-                      <option value="" disabled>
-                        -- ภาคเรียนที่ --
-                      </option>
-                      {semester.map((sem) => (
-                        <option key={sem} value={sem}>
-                          ภาคเรียนที่ {sem}
+                        {academicYear.map((year) => (
+                          <option key={year} value={year}>
+                            ปีการศึกษา {year}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
+                    <div className="select-wrapper" style={{ width: "33.33%" }}>
+                      <Form.Select
+                        className="text-center modern-select"
+                        style={{ fontSize: "0.8vw", height: "3rem" }}
+                        value={regSemester}
+                        onChange={(e) => setRegSemester(Number(e.target.value))}
+                      >
+                        <option value="" disabled>
+                          -- ภาคเรียนที่ --
                         </option>
-                      ))}
-                    </Form.Select>
+                        {semester.map((sem) => (
+                          <option key={sem} value={sem}>
+                            ภาคเรียนที่ {sem}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
                   </div>
                 </div>
                 <div className="d-flex align-items-start border border-black w-100 h-100">
@@ -625,7 +693,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -639,7 +707,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -653,7 +721,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -667,7 +735,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -681,7 +749,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -695,7 +763,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -717,7 +785,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -731,7 +799,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -745,7 +813,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -759,7 +827,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -773,7 +841,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -787,7 +855,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -809,7 +877,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -823,7 +891,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -837,7 +905,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -851,7 +919,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -865,7 +933,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -879,7 +947,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -901,7 +969,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -915,7 +983,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -929,7 +997,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -943,7 +1011,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -957,7 +1025,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -971,7 +1039,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -993,7 +1061,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -1007,7 +1075,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -1021,7 +1089,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -1035,7 +1103,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -1049,7 +1117,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -1063,7 +1131,7 @@ function StudentTableManagement() {
                           >
                             <option value="-">-</option>
                             {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.name}>
+                              <option key={subject.id} value={subject.id}>
                                 {subject.name}
                               </option>
                             ))}
@@ -1122,31 +1190,31 @@ function StudentTableManagement() {
                     {
                       time: `${regTimeTable[0].startHour}:${regTimeTable[0].startMinute} - ${regTimeTable[0].endHour}:${regTimeTable[0].endMinute}`,
                       data: [
-                        regMon0830,
-                        regTue0830,
-                        regWed0830,
-                        regThu0830,
-                        regFri0830,
+                        getSubjectDisplay(regMon0830),
+                        getSubjectDisplay(regTue0830),
+                        getSubjectDisplay(regWed0830),
+                        getSubjectDisplay(regThu0830),
+                        getSubjectDisplay(regFri0830),
                       ],
                     },
                     {
                       time: `${regTimeTable[1].startHour}:${regTimeTable[1].startMinute} - ${regTimeTable[1].endHour}:${regTimeTable[1].endMinute}`,
                       data: [
-                        regMon0930,
-                        regTue0930,
-                        regWed0930,
-                        regThu0930,
-                        regFri0930,
+                        getSubjectDisplay(regMon0930),
+                        getSubjectDisplay(regTue0930),
+                        getSubjectDisplay(regWed0930),
+                        getSubjectDisplay(regThu0930),
+                        getSubjectDisplay(regFri0930),
                       ],
                     },
                     {
                       time: `${regTimeTable[2].startHour}:${regTimeTable[2].startMinute} - ${regTimeTable[2].endHour}:${regTimeTable[2].endMinute}`,
                       data: [
-                        regMon1030,
-                        regTue1030,
-                        regWed1030,
-                        regThu1030,
-                        regFri1030,
+                        getSubjectDisplay(regMon1030),
+                        getSubjectDisplay(regTue1030),
+                        getSubjectDisplay(regWed1030),
+                        getSubjectDisplay(regThu1030),
+                        getSubjectDisplay(regFri1030),
                       ],
                     },
                   ].map((col, i) => (
@@ -1203,31 +1271,31 @@ function StudentTableManagement() {
                     {
                       time: `${regTimeTable[3].startHour}:${regTimeTable[3].startMinute} - ${regTimeTable[3].endHour}:${regTimeTable[3].endMinute}`,
                       data: [
-                        regMon1230,
-                        regTue1230,
-                        regWed1230,
-                        regThu1230,
-                        regFri1230,
+                        getSubjectDisplay(regMon1230),
+                        getSubjectDisplay(regTue1230),
+                        getSubjectDisplay(regWed1230),
+                        getSubjectDisplay(regThu1230),
+                        getSubjectDisplay(regFri1230),
                       ],
                     },
                     {
                       time: `${regTimeTable[4].startHour}:${regTimeTable[4].startMinute} - ${regTimeTable[4].endHour}:${regTimeTable[4].endMinute}`,
                       data: [
-                        regMon1330,
-                        regTue1330,
-                        regWed1330,
-                        regThu1330,
-                        regFri1330,
+                        getSubjectDisplay(regMon1330),
+                        getSubjectDisplay(regTue1330),
+                        getSubjectDisplay(regWed1330),
+                        getSubjectDisplay(regThu1330),
+                        getSubjectDisplay(regFri1330),
                       ],
                     },
                     {
                       time: `${regTimeTable[5].startHour}:${regTimeTable[5].startMinute} - ${regTimeTable[5].endHour}:${regTimeTable[5].endMinute}`,
                       data: [
-                        regMon1430,
-                        regTue1430,
-                        regWed1430,
-                        regThu1430,
-                        regFri1430,
+                        getSubjectDisplay(regMon1430),
+                        getSubjectDisplay(regTue1430),
+                        getSubjectDisplay(regWed1430),
+                        getSubjectDisplay(regThu1430),
+                        getSubjectDisplay(regFri1430),
                       ],
                     },
                     { time: "", data: ["", "", "", "", ""] },

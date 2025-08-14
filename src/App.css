@@ -555,6 +555,56 @@ input[type="number"]::-webkit-outer-spin-button {
   box-shadow: 0 2px 6px rgba(255, 81, 89, 0.4);
 }
 
+.setting-butt {
+  color: #2e7d32; /* เขียวเข้มสำหรับไอคอน */
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+  padding: 6px;
+  border-radius: 6px;
+  background-color: rgba(129, 199, 132, 0.3); /* เขียวอ่อนโปร่ง */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease-in-out;
+}
+
+.setting-butt:hover {
+  background-color: rgba(76, 175, 80, 0.5); /* เขียวสดขึ้นตอน hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.cancel-butt {
+  background-color: #e53935; /* แดงสด */
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease-in-out;
+}
+
+.cancel-butt:hover {
+  background-color: #c62828; /* แดงเข้มขึ้น */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.save-butt {
+  background-color: #43a047; /* เขียวสด */
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease-in-out;
+}
+
+.save-butt:hover {
+  background-color: #2e7d32; /* เขียวเข้มขึ้น */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
 /* --------------------------------------------------------------- */
 
 .footer {
@@ -869,16 +919,4 @@ input[type="number"]::-webkit-outer-spin-button {
   opacity: 1;
   visibility: visible;
   pointer-events: auto; /* ให้สามารถคลิกได้ */
-}
-
-.grade-header {
-  border: 1px solid #000;
-  padding: 0 30px;
-}
-
-.grade-header tr,
-.grade-header th,
-.grade-header td {
-  border: 1px solid #43a047 !important;
-  padding: 0 5px;
 }

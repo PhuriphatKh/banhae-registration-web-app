@@ -1,219 +1,115 @@
-import React, { useState, useEffect } from "react";
-import { Form, Alert, Button, Row, Col, Card } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
+import { db } from "../firebase";
+import { collection, onSnapshot } from "firebase/firestore";
+import "./GradeManagement.css"
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import { db } from "../firebase";
-import logo from "../assets/logo.png";
 
 function GradeManagement() {
-  const [students, setStudents] = useState([]);
-  const [studentClass, setStudentClass] = useState("ประถมศึกษาปีที่ 1");
+  const [subjects, setSubjects] = useState([]);
+  const [taughtSubject, setTaughtSubject] = useState([]);
 
+  const navigate = useNavigate();
   const { profileData } = useUserProfile();
+  const { user } = useUserAuth();
 
+  // Get the subjects
   useEffect(() => {
-    if (!profileData || profileData.length === 0) return;
+    const unsubscribe = onSnapshot(collection(db, "subjects"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setSubjects(data);
+      console.log("Subjects data updated:", data);
+    });
 
-    const loadStudents = profileData.filter(
-      (profile) => profile.user && profile.user.position === "นักเรียน"
-    );
+    return () => unsubscribe(); // ยกเลิกเมื่อ component unmount
+  }, []);
 
-    setStudents(loadStudents);
-    console.log("นักเรียนทั้งหมด:", loadStudents);
+  // Get the subjects taught by the teacher
+  useEffect(() => {
+    if (!profileData) return;
+
+    const loadTeacher = profileData.find((item) => item.id === user.uid);
+    if (loadTeacher) {
+      setTaughtSubject(loadTeacher.user.taughtSubject);
+    }
   }, [profileData]);
 
-  const filteredData = students.filter(
-    (item) => item.user && item.user.classLevel === studentClass
-  );
-
-  const handelEdit = async (id) => {
-    try {
-      navigate(`/grade-management/student?id=${id}`);
-    } catch (err) {
-      console.log(err.message);
-    }
+  const handleSubjectClick = (subjectId) => {
+    navigate(`/grade-management/subject?id=${subjectId}`);
   };
 
   return (
     <div style={{ background: "#BBBBBB" }}>
       <Navbar />
       <div className="p-3 page-detail">
-        <div className="bg-white page-detail-box">
-          <div className="d-flex justify-content-center custom-h1 fw-bold p-3">
+        <div className="grade-table bg-white page-detail-box">
+          <div className="d-flex justify-content-center custom-h1 fw-bold">
             จัดการคะแนนรายวิชา
           </div>
-          <div className="custom-h2 d-flex align-items-center gap-4 p-3 w-100">
-            ตัวเลือก
-            <div className="custom-select">
-              <select
-                className="custom-h3 text-center"
-                style={{ width: "200px", backgroundColor: "#BBBBBB" }}
-                onChange={(e) => setStudentClass(e.target.value)}
-              >
-                <option value="ประถมศึกษาปีที่ 1">ประถมศึกษาปีที่ 1</option>
-                <option value="ประถมศึกษาปีที่ 2">ประถมศึกษาปีที่ 2</option>
-                <option value="ประถมศึกษาปีที่ 3">ประถมศึกษาปีที่ 3</option>
-                <option value="ประถมศึกษาปีที่ 4">ประถมศึกษาปีที่ 4</option>
-                <option value="ประถมศึกษาปีที่ 5">ประถมศึกษาปีที่ 5</option>
-                <option value="ประถมศึกษาปีที่ 6">ประถมศึกษาปีที่ 6</option>
-              </select>
-            </div>
+          <div className="custom-h2 d-flex align-items-center w-100">
+            เลือกวิชาที่ต้องการจัดการคะแนน
           </div>
-          <div className="w-100 p-3">
-            <table className="w-100">
-              <thead>
-                <tr className="grade-header">
-                  <th
-                    rowSpan={4}
-                    className="text-center"
-                    style={{ minWidth: "100px" }}
-                  >
-                    รหัสประจำตัว
-                  </th>
-                  <th
-                    rowSpan={4}
-                    className="text-center"
-                    style={{ minWidth: "200px" }}
-                  >
-                    ชื่อ - นามสกุล
-                  </th>
-                  <th colSpan={4} className="text-center">
-                    ภาคเรียนที่ 1
-                  </th>
-                  <th colSpan={4} className="text-center">
-                    ภาคเรียนที่ 2
-                  </th>
-                  <th colSpan={2} className="text-center">
-                    ผลการเรียนรู้รายปี
-                  </th>
-                  <th rowSpan={4} className="text-center">
-                    ผลการแก้ไข
-                  </th>
-                  <th rowSpan={2} colSpan={2} className="text-center">
-                    สรุปผลการประเมิน
-                  </th>
-                  <th rowSpan={4} className="text-center">
-                    หมายเหตุ
-                  </th>
-                </tr>
-                <tr className="grade-header">
-                  <th rowSpan={2} className="text-center">
-                    ตัวชี้วัด
-                  </th>
-                  <th className="text-center">ระหว่างเรียน</th>
-                  <th className="text-center">ปลายภาค</th>
-                  <th className="text-center">รวม</th>
-                  <th rowSpan={2} className="text-center">
-                    ตัวชี้วัด
-                  </th>
-                  <th className="text-center">ระหว่างเรียน</th>
-                  <th className="text-center">ปลายภาค</th>
-                  <th className="text-center">รวม</th>
-                  <th className="text-center">รวม 2 ภาค</th>
-                  <th rowSpan={3} className="text-center">
-                    ระดับผลการเรียน
-                  </th>
-                </tr>
-                <tr className="grade-header">
-                  <th className="text-center">เต็ม</th>
-                  <th className="text-center">เต็ม</th>
-                  <th className="text-center">เต็ม</th>
-                  <th className="text-center">เต็ม</th>
-                  <th className="text-center">เต็ม</th>
-                  <th className="text-center">เต็ม</th>
-                  <th className="text-center">เต็ม</th>
-                  <th rowSpan={2} className="text-center">
-                    ผ่าน
-                  </th>
-                  <th rowSpan={2} className="text-center">
-                    ไม่ผ่าน
-                  </th>
-                </tr>
-                <tr className="grade-header">
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                  <th className="text-center" style={{ maxWidth: "30px" }}>
-                    <Form.Control></Form.Control>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((student) => (
-                  <tr key={student.id} className="grade-header">
-                    <td className="text-center">{student.user.studentID}</td>
-                    <td className="text-center">
-                      {student.user.firstName} {student.user.lastName}
+          <table className="p-5 w-100 h-100">
+            <thead>
+              <tr>
+                <th
+                  className="text-center"
+                  width="33.33%"
+                  style={{ borderTopLeftRadius: "20px" }}
+                >
+                  รหัสวิชา
+                </th>
+                <th
+                  className="text-center border-start border-end"
+                  width="33.33%"
+                  style={{ borderColor: "#ddd" }}
+                >
+                  ชื่อวิชา
+                </th>
+                <th
+                  className="text-center"
+                  width="33.33%"
+                  style={{ borderTopRightRadius: "20px" }}
+                >
+                  ระดับชั้นเรียน
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {subjects
+                .filter((subject) => taughtSubject.includes(subject.id))
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((subject) => (
+                  <tr key={subject.id}>
+                    <td
+                      className="text-center"
+                      onClick={() => handleSubjectClick(subject.id)}
+                    >
+                      {subject.id}
                     </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
+                    <td
+                      className="text-center border-start border-end"
+                      style={{ borderColor: "#ddd" }}
+                      onClick={() => handleSubjectClick(subject.id)}
+                    >
+                      {subject.name}
                     </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
-                    </td>
-                    <td className="text-center">
-                      <Form.Control type="text" />
+                    <td
+                      className="text-center"
+                      onClick={() => handleSubjectClick(subject.id)}
+                    >
+                      {subject.classLevel}
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
       <Footer />

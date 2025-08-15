@@ -134,8 +134,10 @@ function GradeManagement() {
         0
       );
 
-      const hasBlank = termEntries.some(
-        ([, v]) => v.indicator === "" || v.during === "" || v.final === ""
+      const hasBlank = termEntries.some(([, v]) =>
+        ["indicator", "during", "final"].some(
+          (k) => !v?.[k] || String(v[k]).trim() === ""
+        )
       );
 
       updatedStudent.grandTotal = grandTotal;

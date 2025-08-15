@@ -7,7 +7,13 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { db } from "../firebase";
 import "./ManageSubjectScores.css";
-import { onSnapshot, collection, doc, updateDoc } from "firebase/firestore";
+import {
+  onSnapshot,
+  collection,
+  doc,
+  updateDoc,
+  setDoc,
+} from "firebase/firestore";
 
 // ---------- Utilities ----------
 const pickGradeFromCriteria = (total, g) => {
@@ -43,7 +49,15 @@ function GradeManagement() {
   const [subjectData, setSubjectData] = useState(null);
   const [scoringCriteria, setScoringCriteria] = useState({});
   const [studentScores, setStudentScores] = useState({});
-  const [gradingCriteria, setGradingCriteria] = useState(null);
+  const [gradingCriteria, setGradingCriteria] = useState({
+    grade4_0: 80,
+    grade3_5: 75,
+    grade3_0: 70,
+    grade2_5: 65,
+    grade2_0: 60,
+    grade1_5: 55,
+    grade1_0: 50,
+  });
   const [open, setOpen] = useState(false);
 
   const location = useLocation();
@@ -172,7 +186,7 @@ function GradeManagement() {
         subjectData.classLevel,
         subjectID
       );
-      await updateDoc(ref, { grading_criteria: form });
+      await setDoc(ref, { grading_criteria: form });
       setGradingCriteria(form);
     } catch (error) {
       console.error("Error saving grading criteria:", error);
@@ -269,7 +283,7 @@ function GradeManagement() {
                   <th colSpan={2} className="text-center">
                     ผลการเรียนรู้รายปี
                   </th>
-                  
+
                   <th rowSpan={4} className="text-center">
                     ชั่วโมงเรียน
                   </th>
@@ -644,10 +658,15 @@ function GradeManagement() {
               </tbody>
             </table>
             <div className="d-flex justify-content-center align-items-center w-100 py-3 gap-3">
-              <button className="cancel-butt" onClick={() => navigate("/grade-management")}>
+              <button
+                className="cancel-butt"
+                onClick={() => navigate("/grade-management")}
+              >
                 ยกเลิก
               </button>
-              <button className="save-butt" onClick={saveAll}>บันทึก</button>
+              <button className="save-butt" onClick={saveAll}>
+                บันทึก
+              </button>
             </div>
           </div>
         </div>

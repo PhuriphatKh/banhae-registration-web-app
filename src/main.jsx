@@ -21,6 +21,7 @@ import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import AdminRoute from "./auth/AdminRoute.jsx";
 import StudentRoute from "./auth/StudentRoute.jsx";
 import GuestRoute from "./auth/GuestRoute.jsx";
+import StudentRecords from "./components/StudentRecords.jsx";
 import "./index.css";
 
 import { UserAuthContextProvider } from "./context/UserAuthContext.jsx";
@@ -65,6 +66,14 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+    {
+    path: "/student-records",
+    element: (
+      <ProtectedRoute>
+        <StudentRecords />
+      </ProtectedRoute>
+    ),
+  },
   {
     path: "/home/ครู",
     element: (
@@ -94,14 +103,6 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <ManageSubjectScores />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/studenthome",
-    element: (
-      <ProtectedRoute>
-        <StudentHome />
       </ProtectedRoute>
     ),
   },
@@ -187,9 +188,7 @@ const router = createBrowserRouter([
     path: "/usermanagement/profile",
     element: (
       <ProtectedRoute>
-        <AdminRoute>
           <EditUserProfile />
-        </AdminRoute>
       </ProtectedRoute>
     ),
   },

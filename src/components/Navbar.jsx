@@ -130,7 +130,7 @@ function Navbar() {
                 ]
               : userRole === "ครู"
               ? [{ label: "จัดการคะแนนรายวิชา", path: `/grade-management` }]
-              : [{ label: "ผลการเรียน", path: `/school-record` }]
+              : [{ label: "ผลคะแนนรายวิชา", path: `/student-records` }]
           }
           open={dropdowns.open3}
           setOpen={(open) => setDropdowns({ ...dropdowns, open3: open })}

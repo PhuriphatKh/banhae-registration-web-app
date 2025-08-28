@@ -68,10 +68,11 @@ const FamilyInfoSection = ({
 );
 
 function Profile() {
+  const [subjects, setSubjects] = useState([]);
   const [profileID, setProfileID] = useState("");
   const [profileData, setProfileData] = useState({ profile: {}, address: {} });
-  const [subjects, setSubjects] = useState([]);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // get profile ID from URL query parameters
   useEffect(() => {
@@ -174,9 +175,19 @@ function Profile() {
       <Navbar />
 
       {/* Profile Detail */}
-      <div className="profile-detail" style={{ height: "100vh" }}>
-        <div className="profile-section overflow-auto">
-          <div className="profile-title mb-1">ข้อมูลส่วนตัว</div>
+      <div className="profile-detail">
+        <div className="profile-section">
+          <div className="profile-title mb-1 justify-content-between align-items-center mb-2">
+            <div>ข้อมูลส่วนตัว</div>{" "}
+            <button
+              className="delete-butt"
+              onClick={() =>
+                navigate(`/usermanagement/profile?id=${profileID}`)
+              }
+            >
+              แก้ไข
+            </button>
+          </div>
           <table className="profile-table mb-5">
             <tbody>
               <tr>
@@ -194,46 +205,50 @@ function Profile() {
                     : "วิชาที่สอน"}
                 </th>
                 <td>
-                  <div className="d-flex">
-                    <div className="d-flex flex-column justify-content-center align-items-start w-50 h-100">
-                      {Array.isArray(userInfo?.taughtSubject)
-                        ? userInfo.taughtSubject.map((subjectId) => {
-                            const subject = subjects.find(
-                              (s) => s.id === subjectId
-                            );
-                            return (
-                              <div key={subjectId}>
-                                {subject
-                                  ? `${subject.id} ${subject.name}`
-                                  : "ไม่พบวิชา"}
-                              </div>
-                            );
-                          })
-                        : userInfo?.taughtSubject
-                        ? `${userInfo.taughtSubject.id} ${userInfo.taughtSubject.name}`
-                        : "-"}
+                  {userInfo.position === "ครู" ? (
+                    <div className="d-flex">
+                      <div className="d-flex flex-column justify-content-center align-items-start w-50 h-100">
+                        {Array.isArray(userInfo?.taughtSubject)
+                          ? userInfo.taughtSubject.map((subjectId) => {
+                              const subject = subjects.find(
+                                (s) => s.id === subjectId
+                              );
+                              return (
+                                <div key={subjectId}>
+                                  {subject
+                                    ? `${subject.id} ${subject.name}`
+                                    : "ไม่พบวิชา"}
+                                </div>
+                              );
+                            })
+                          : userInfo?.taughtSubject
+                          ? `${userInfo.taughtSubject.id} ${userInfo.taughtSubject.name}`
+                          : "-"}
+                      </div>
+                      <div className="d-flex flex-column justify-content-center align-items-start w-100 h-100">
+                        {Array.isArray(userInfo?.taughtSubject)
+                          ? userInfo.taughtSubject.map((subjectId) => {
+                              const subject = subjects.find(
+                                (s) => s.id === subjectId
+                              );
+                              return (
+                                <div key={subjectId}>
+                                  {subject
+                                    ? subject.classLevel
+                                    : "ไม่พบชั้นเรียน"}
+                                </div>
+                              );
+                            })
+                          : subjects.find(
+                              (s) => s.id === userInfo?.taughtSubject
+                            )?.classLevel || "-"}
+                      </div>
                     </div>
+                  ) : (
                     <div className="d-flex flex-column justify-content-center align-items-start w-100 h-100">
-                      {Array.isArray(userInfo?.taughtSubject)
-                        ? userInfo.taughtSubject.map((subjectId) => {
-                            const subject = subjects.find(
-                              (s) => s.id === subjectId
-                            );
-                            return (
-                              <div
-                                key={subjectId}
-                              >
-                                {subject
-                                  ? subject.classLevel
-                                  : "ไม่พบชั้นเรียน"}
-                              </div>
-                            );
-                          })
-                        : subjects.find(
-                            (s) => s.id === userInfo?.taughtSubject
-                          )?.classLevel || "-"}
+                      {userInfo.classLevel || "-"}
                     </div>
-                  </div>
+                  )}
                 </td>
               </tr>
               <tr>

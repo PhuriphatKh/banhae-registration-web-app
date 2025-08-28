@@ -2,12 +2,12 @@
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 8px #0001;
-  margin-bottom: 2rem;
   padding: 2rem 1.5rem;
   width: 100%;
 }
 
 .profile-title {
+  display: flex;
   font-size: 1.5rem;
   font-weight: bold;
   color: #2d7a3e;

@@ -1621,6 +1621,7 @@ function EditUserProfile() {
           <Button
             type="button"
             className="delete-butt btn-secondary rounded-pill px-4 py-2"
+            onClick={() => navigate(-1)}
           >
             ยกเลิก
           </Button>

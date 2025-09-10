@@ -1,6 +1,8 @@
 // SettingsModal.jsx
 import { useState, useEffect } from "react";
-import { Modal, Button, Form, Row, Col } from "react-bootstrap";
+import { Modal, Button, Form, Row, Col, InputGroup } from "react-bootstrap";
+import { TbMathEqualGreater } from "react-icons/tb";
+import { CgMathEqual } from "react-icons/cg";
 
 export default function SettingsModal({ show, onClose, onSave, initial }) {
   const [form, setForm] = useState({
@@ -46,76 +48,146 @@ export default function SettingsModal({ show, onClose, onSave, initial }) {
       <Modal.Body>
         <Row className="g-3">
           <Col md={4}>
-            <Form.Label>เกรด 1.0 ขึ้นไป</Form.Label>
-            <Form.Control
-              type="number"
-              min={0}
-              name="grade1_0"
-              value={form.grade1_0}
-              onChange={handleChange}
-            />
+            <Form.Label>
+              เกรด 1.0
+            </Form.Label>
+            <InputGroup className="align-items-center">
+              <InputGroup.Text>
+                <TbMathEqualGreater size={24} />
+              </InputGroup.Text>
+              <Form.Control
+                type="number"
+                name="grade4_0"
+                className="text-center"
+                min={0}
+                value={form.grade1_0}
+                onChange={handleChange}
+                style={{ maxWidth: 120 }}
+              />
+              <InputGroup.Text>คะแนน</InputGroup.Text>
+            </InputGroup>
           </Col>
           <Col md={4}>
-            <Form.Label>เกรด 1.5 ขึ้นไป</Form.Label>
-            <Form.Control
-              type="number"
-              min={0}
-              name="grade1_5"
-              value={form.grade1_5}
-              onChange={handleChange}
-            />
+            <Form.Label>
+              เกรด 1.5
+            </Form.Label>
+            <InputGroup className="align-items-center">
+              <InputGroup.Text>
+                <TbMathEqualGreater size={24} />
+              </InputGroup.Text>
+              <Form.Control
+                type="number"
+                name="grade1_5"
+                min={0}
+                value={form.grade1_5}
+                onChange={handleChange}
+                style={{ maxWidth: 120 }}
+                className="text-center"
+              />
+              <InputGroup.Text>คะแนน</InputGroup.Text>
+            </InputGroup>
           </Col>
           <Col md={4}>
-            <Form.Label>เกรด 2.0 ขึ้นไป</Form.Label>
-            <Form.Control
-              type="number"
-              min={0}
-              name="grade2_0"
-              value={form.grade2_0}
-              onChange={handleChange}
-            />
+            <Form.Label>
+              เกรด 2.0
+            </Form.Label>
+            <InputGroup className="align-items-center">
+              <InputGroup.Text>
+                <TbMathEqualGreater size={24} />
+              </InputGroup.Text>
+              <Form.Control
+                type="number"
+                min={0}
+                name="grade2_0"
+                value={form.grade2_0}
+                onChange={handleChange}
+                style={{ maxWidth: 120 }}
+                className="text-center"
+              />
+              <InputGroup.Text>คะแนน</InputGroup.Text>
+            </InputGroup>
           </Col>
 
           <Col md={4}>
-            <Form.Label>เกรด 2.5 ขึ้นไป</Form.Label>
-            <Form.Control
-              type="number"
-              min={0}
-              name="grade2_5"
-              value={form.grade2_5}
-              onChange={handleChange}
-            />
+            <Form.Label>
+              เกรด 2.5
+            </Form.Label>
+            <InputGroup className="align-items-center">
+              <InputGroup.Text>
+                <TbMathEqualGreater size={24} />
+              </InputGroup.Text>
+              <Form.Control
+                type="number"
+                min={0}
+                name="grade2_5"
+                value={form.grade2_5}
+                onChange={handleChange}
+                style={{ maxWidth: 120 }}
+                className="text-center"
+              />
+              <InputGroup.Text>คะแนน</InputGroup.Text>
+            </InputGroup>
           </Col>
           <Col md={4}>
-            <Form.Label>เกรด 3.0 ขึ้นไป</Form.Label>
-            <Form.Control
-              type="number"
-              min={0}
-              name="grade3_0"
-              value={form.grade3_0}
-              onChange={handleChange}
-            />
+            <Form.Label>
+              เกรด 3.0
+            </Form.Label>
+            <InputGroup className="align-items-center">
+              <InputGroup.Text>
+                <TbMathEqualGreater size={24} />
+              </InputGroup.Text>
+              <Form.Control
+                type="number"
+                min={0}
+                name="grade3_0"
+                value={form.grade3_0}
+                onChange={handleChange}
+                style={{ maxWidth: 120 }}
+                className="text-center"
+              />
+              <InputGroup.Text>คะแนน</InputGroup.Text>
+            </InputGroup>
           </Col>
           <Col md={4}>
-            <Form.Label>เกรด 3.5 ขึ้นไป</Form.Label>
-            <Form.Control
-              type="number"
-              min={0}
-              name="grade3_5"
-              value={form.grade3_5}
-              onChange={handleChange}
-            />
+            <Form.Label>
+              เกรด 3.5
+            </Form.Label>
+            <InputGroup className="align-items-center">
+              <InputGroup.Text>
+                <TbMathEqualGreater size={24} />
+              </InputGroup.Text>
+              <Form.Control
+                type="number"
+                min={0}
+                name="grade3_5"
+                value={form.grade3_5}
+                onChange={handleChange}
+                style={{ maxWidth: 120 }}
+                className="text-center"
+              />
+              <InputGroup.Text>คะแนน</InputGroup.Text>
+            </InputGroup>
           </Col>
 
           <Col md={4}>
-            <Form.Label>เกรด 4.0 ขึ้นไป</Form.Label>
-            <Form.Control
-              type="number"
-              min={0}
-              name="grade4_0"
-              value={form.grade4_0}
-              onChange={handleChange}
-            />
+            <Form.Label>
+              เกรด 4.0
+            </Form.Label>
+            <InputGroup className="align-items-center">
+              <InputGroup.Text>
+                <CgMathEqual size={24} />
+              </InputGroup.Text>
+              <Form.Control
+                type="number"
+                min={0}
+                name="grade4_0"
+                value={form.grade4_0}
+                onChange={handleChange}
+                style={{ maxWidth: 120 }}
+                className="text-center"
+              />
+              <InputGroup.Text>คะแนน</InputGroup.Text>
+            </InputGroup>
           </Col>
         </Row>
       </Modal.Body>

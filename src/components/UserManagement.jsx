@@ -17,13 +17,15 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 
 function UserManagement() {
+  const [adminID, setAdminID] = useState("");
+  const [managerID, setManagerID] = useState("");
   const [studentID, setStudentID] = useState("");
   const [teacherID, setTeacherID] = useState("");
   const [regFirstName, setRegFirstName] = useState("");
   const [regLastName, setRegLastName] = useState("");
   const [regPosition, setRegPosition] = useState("ครู");
   const [regClassLevel, setRegClassLevel] = useState("ประถมศึกษาปีที่ 1");
-  const [regtaughtSubject, setRegTaughtSubject] = useState([""]);
+  const [regtaughtSubject, setRegTaughtSubject] = useState("");
   const [subjects, setSubjects] = useState([]);
 
   const [position, setPosition] = useState("ครู");
@@ -38,7 +40,7 @@ function UserManagement() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ฟังก์ชันสำหรับสร้างรหัสนักเรียนและรหัสครู
+  // ฟังก์ชันสำหรับสร้างรหัสนักเรียน
   async function counter1() {
     //generate รหัสนักเรียน
     let newStudentID = null;
@@ -61,6 +63,7 @@ function UserManagement() {
     return newStudentID;
   }
 
+  // ฟังก์ชันสำหรับสร้างรหัสครู
   async function counter2() {
     //generate รหัสครู
     let newTeacherID = null;
@@ -83,8 +86,84 @@ function UserManagement() {
     return newTeacherID;
   }
 
+  // ฟังก์ชันสำหรับสร้างรหัสแอดมิน
+  async function counter3() {
+    //generate รหัสแอดมิน
+    let newAdminID = null;
+    try {
+      const counterdoc = await getDoc(
+        doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
+      );
+      if (counterdoc.exists()) {
+        newAdminID = counterdoc.data().lastAdminID + 1;
+        await updateDoc(doc(db, "id_counter", "kUHECVelJyWh1piBZsTH"), {
+          lastAdminID: newAdminID,
+        });
+        setAdminID(newAdminID);
+      } else {
+        console.log("ไม่พบเอกสาร counter");
+      }
+    } catch (error) {
+      console.log("เกิดข้อผิดพลาด:", error);
+    }
+    return newAdminID;
+  }
+
+  // ฟังก์ชันสำหรับสร้างรหัสผู้อำนวยการ
+  async function counter4() {
+    //generate รหัสผู้จัดการ
+    let newManagerID = null;
+    try {
+      const counterdoc = await getDoc(
+        doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
+      );
+      if (counterdoc.exists()) {
+        newManagerID = counterdoc.data().lastManagerID + 1;
+        await updateDoc(doc(db, "id_counter", "kUHECVelJyWh1piBZsTH"), {
+          lastManagerID: newManagerID,
+        });
+        setManagerID(newManagerID);
+      } else {
+        console.log("ไม่พบเอกสาร counter");
+      }
+    } catch (error) {
+      console.log("เกิดข้อผิดพลาด:", error);
+    }
+    return newManagerID;
+  }
+
+  // ฟังชันสำหรับดึงรหัสนักเรียนและรหัสครูล่าสุดจาก Firestore
+  useEffect(() => {
+    const fetchCounter = async () => {
+      const counterdoc = await getDoc(
+        doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
+      );
+      if (counterdoc.exists()) {
+        const data = counterdoc.data();
+        if (
+          typeof data.lastStudentID === "number" &&
+          typeof data.lastTeacherID === "number" &&
+          typeof data.lastAdminID === "number" &&
+          typeof data.lastManagerID === "number"
+        ) {
+          setStudentID(data.lastStudentID + 1);
+          setTeacherID(data.lastTeacherID + 1);
+          setAdminID(data.lastAdminID + 1);
+          setManagerID(data.lastManagerID + 1);
+        } else {
+          console.log(
+            "Missing lastStudentID or lastTeacherID in counter document"
+          );
+        }
+      } else {
+        console.log("ไม่พบเอกสาร counter");
+      }
+    };
+    fetchCounter();
+  }, []);
+
   // ฟังก์ชันสำหรับกรองข้อมูลผู้ใช้ตามตำแหน่งและชั้นเรียน
-  const filteredData = profileData.filter((item) => {
+  const filteredData = (profileData || []).filter((item) => {
     if (position === "ครู") {
       return item.user?.position === "ครู";
     } else if (position === "นักเรียน") {
@@ -92,8 +171,11 @@ function UserManagement() {
         item.user?.position === "นักเรียน" &&
         item.user?.classLevel === studentClass
       );
+    } else if (position === "แอดมิน") {
+      return item.user?.position === "แอดมิน";
+    } else if (position === "ผู้อำนวยการ") {
+      return item.user?.position === "ผู้อำนวยการ";
     }
-    return true;
   });
 
   // ฟังก์ชันสำหรับออกจากระบบ
@@ -107,7 +189,6 @@ function UserManagement() {
   };
 
   // ฟังก์ชันสำหรับแก้ไขข้อมูลผู้ใช้
-  // ใช้ navigate เพื่อเปลี่ยนเส้นทางไปยังหน้าจัดการโปรไฟล์
   const handelEdit = async (id) => {
     try {
       navigate(`/usermanagement/profile?id=${id}`);
@@ -126,13 +207,14 @@ function UserManagement() {
   };
 
   // ฟังก์ชันสำหรับสมัครสมาชิกผู้ใช้ใหม่
-  // ใช้ signUp จาก context เพื่อสร้างผู้ใช้ใหม่
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     let lastStudentID = null;
     let lastTeacherID = null;
+    let lastAdminID = null;
+    let lastManagerID = null;
     let user = null;
 
     try {
@@ -152,6 +234,22 @@ function UserManagement() {
         );
       }
 
+      if (regPosition === "แอดมิน") {
+        lastAdminID = await counter3();
+        user = await signUp(
+          `${lastAdminID}@gmail.com`,
+          `banhae${lastAdminID}`
+        );
+      }
+
+      if (regPosition === "ผู้อำนวยการ") {
+        lastManagerID = await counter4();
+        user = await signUp(
+          `${lastManagerID}@gmail.com`,
+          `banhae${lastManagerID}`
+        );
+      }
+
       if (!user) {
         setError("ไม่สามารถสมัครผู้ใช้ได้ (user is null)");
         return;
@@ -161,24 +259,29 @@ function UserManagement() {
       const userProfile = {
         createdAt: new Date(),
         user: {
-          studentID: regPosition === "นักเรียน" ? lastStudentID : null,
-          teacherID: regPosition === "ครู" ? lastTeacherID : null,
-          classLevel: regPosition === "นักเรียน" ? regClassLevel : null,
-          taughtSubject: regPosition === "ครู" ? regtaughtSubject : null,
           firstName: regFirstName,
           lastName: regLastName,
           position: regPosition,
         },
       };
 
+      if (regPosition === "นักเรียน") {
+        userProfile.user.studentID = lastStudentID;
+      } else if (regPosition === "ครู") {
+        userProfile.user.teacherID = lastTeacherID;
+      } else if (regPosition === "แอดมิน") {
+        userProfile.user.adminID = lastAdminID;
+      } else if (regPosition === "ผู้อำนวยการ") {
+        userProfile.user.managerID = lastManagerID;
+      }
+
       await setDoc(doc(db, "profile", user.uid), userProfile);
+
       if (
         regPosition === "ครู" &&
         regtaughtSubject &&
         regtaughtSubject.trim() !== ""
       ) {
-        // If the registered user is a teacher, ensure the subject exists and add the teacher's UID to the subject's 'teachers' array.
-        // This keeps track of which teachers are assigned to which subjects.
         if (regPosition === "ครู" && regtaughtSubject) {
           await setDoc(
             doc(db, "subjects", regtaughtSubject),
@@ -193,7 +296,6 @@ function UserManagement() {
 
       console.log("✅ User registered and data saved to Firestore!");
 
-      // ✅ เคลียร์ฟอร์ม
       setRegFirstName("");
       setRegLastName("");
       setRegPosition("ครู");
@@ -215,44 +317,27 @@ function UserManagement() {
       if (newData.length === 0) return;
 
       setSubjects(newData);
-      console.log("Subjects updated:", newData);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // ฟังชันสำหรับดึงรหัสนักเรียนและรหัสครูล่าสุดจาก Firestore
-  useEffect(() => {
-    const fetchCounter = async () => {
-      const counterdoc = await getDoc(
-        doc(db, "id_counter", "kUHECVelJyWh1piBZsTH")
-      );
-      if (counterdoc.exists()) {
-        const data = counterdoc.data();
-        if (
-          typeof data.lastStudentID === "number" &&
-          typeof data.lastTeacherID === "number"
-        ) {
-          setStudentID(data.lastStudentID + 1);
-          setTeacherID(data.lastTeacherID + 1);
-        } else {
-          console.log(
-            "Missing lastStudentID or lastTeacherID in counter document"
-          );
-        }
-      } else {
-        console.log("ไม่พบเอกสาร counter");
-      }
-    };
-    fetchCounter();
-  }, []);
+  const labelPosition = {
+    ครู: "ครู",
+    นักเรียน: "นักเรียน",
+    แอดมิน: "แอดมิน",
+    ผู้อำนวยการ: "ผู้อำนวยการ",
+  };
 
   return (
     <div className="shool-record-management-page">
       <Navbar />
 
       <div className="shool-record-management-detail page-detail p-4">
-        <Card className="shadow-lg rounded-4 w-100" style={{ minHeight: "80vh", height: "auto" }}>
+        <Card
+          className="shadow-lg rounded-4 w-100"
+          style={{ minHeight: "80vh", height: "auto" }}
+        >
           <Card.Body>
             <h3 className="d-flex justify-content-center w-100 my-2 fw-bold">
               จัดการข้อมูลผู้ใช้
@@ -267,8 +352,11 @@ function UserManagement() {
                     className="modern-select text-center"
                     onChange={(e) => setPosition(e.target.value)}
                   >
-                    <option value="ครู">ครู</option>
-                    <option value="นักเรียน">นักเรียน</option>
+                    {Object.entries(labelPosition).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </Form.Select>
                 </div>
               </Col>
@@ -300,7 +388,7 @@ function UserManagement() {
                   </div>
                 </Col>
               )}
-              
+
               <Col className="d-flex justify-content-end">
                 <Button
                   className="rounded-pill mt-2 edit-butt"
@@ -390,22 +478,26 @@ function UserManagement() {
                                   >
                                     <div className="d-flex flex-column justify-content-center align-items-start w-100 h-100 py-2">
                                       {Array.isArray(item.user?.taughtSubject)
-                                        ? item.user.taughtSubject.map((subjectId) => {
-                                            const subject = subjects.find(
-                                              (s) => s.id === subjectId
-                                            );
-                                            return (
-                                              <div key={subjectId} className="border-bottom border-top border-black w-100 mt-1">
-                                                {subject
-                                                  ? `${subject.id} ${subject.name}`
-                                                  : "ไม่พบวิชา"}
-                                              </div>
-                                            );
-                                          }
-                                        )
+                                        ? item.user.taughtSubject.map(
+                                            (subjectId) => {
+                                              const subject = subjects.find(
+                                                (s) => s.id === subjectId
+                                              );
+                                              return (
+                                                <div
+                                                  key={subjectId}
+                                                  className="border-bottom border-top border-black w-100 mt-1"
+                                                >
+                                                  {subject
+                                                    ? `${subject.id} ${subject.name}`
+                                                    : "ไม่พบวิชา"}
+                                                </div>
+                                              );
+                                            }
+                                          )
                                         : item.user?.taughtSubject
-                                          ? `${item.user.taughtSubject.id} ${item.user.taughtSubject.name}`
-                                          : "-"}
+                                        ? `${item.user.taughtSubject.id} ${item.user.taughtSubject.name}`
+                                        : "-"}
                                     </div>
                                   </td>
                                   <td
@@ -416,21 +508,26 @@ function UserManagement() {
                                   >
                                     <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100 py-2">
                                       {Array.isArray(item.user?.taughtSubject)
-                                        ? item.user.taughtSubject
-                                            .map((subjectId) => {
+                                        ? item.user.taughtSubject.map(
+                                            (subjectId) => {
                                               const subject = subjects.find(
                                                 (s) => s.id === subjectId
                                               );
                                               return (
-                                                <div key={subjectId} className="border-bottom border-top border-black w-100 mt-1">
+                                                <div
+                                                  key={subjectId}
+                                                  className="border-bottom border-top border-black w-100 mt-1"
+                                                >
                                                   {subject
                                                     ? subject.classLevel
                                                     : "ไม่พบชั้นเรียน"}
                                                 </div>
-                                              )
-                                            })
+                                              );
+                                            }
+                                          )
                                         : subjects.find(
-                                            (s) => s.id === item.user?.taughtSubject
+                                            (s) =>
+                                              s.id === item.user?.taughtSubject
                                           )?.classLevel || "-"}
                                     </div>
                                   </td>
@@ -471,6 +568,8 @@ function UserManagement() {
                                     (
                                       b.user?.teacherID ||
                                       b.user?.studentID ||
+                                      b.user?.adminID ||
+                                      b.user?.managerID ||
                                       ""
                                     ).toString()
                                   )
@@ -484,9 +583,10 @@ function UserManagement() {
                                     }
                                   >
                                     <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
-                                      {/* แสดงรหัสประจำตัว (teacherID หรือ studentID) */}
                                       {item.user?.teacherID ||
                                         item.user?.studentID ||
+                                        item.user?.adminID ||
+                                        item.user?.managerID ||
                                         "-"}
                                     </div>
                                   </td>
@@ -556,8 +656,13 @@ function UserManagement() {
                                 onChange={(e) => setRegPosition(e.target.value)}
                                 className="modern-select text-center"
                               >
-                                <option value="ครู">ครู</option>
-                                <option value="นักเรียน">นักเรียน</option>
+                                {Object.entries(labelPosition).map(
+                                  ([value, label]) => (
+                                    <option key={value} value={value}>
+                                      {label}
+                                    </option>
+                                  )
+                                )}
                               </Form.Select>
                             </div>
                           </Col>
@@ -567,7 +672,7 @@ function UserManagement() {
                                 <Form.Select
                                   value={regtaughtSubject}
                                   onChange={(e) =>
-                                    setRegTaughtSubject([e.target.value])
+                                    setRegTaughtSubject(e.target.value)
                                   }
                                   className="modern-select text-center"
                                 >
@@ -581,7 +686,7 @@ function UserManagement() {
                                   ))}
                                 </Form.Select>
                               </div>
-                            ) : (
+                            ) : regPosition === "นักเรียน" ? (
                               <div className="select-wrapper">
                                 <Form.Select
                                   value={regClassLevel}
@@ -607,7 +712,25 @@ function UserManagement() {
                                   ))}
                                 </Form.Select>
                               </div>
-                            )}
+                            ) : regPosition === "แอดมิน" ? (
+                              <div>
+                                <Form.Control
+                                  type="text"
+                                  value={"รหัสประจำตัว : " + adminID}
+                                  className="modern-input fw-bold"
+                                  disabled
+                                />
+                              </div>
+                            ) : regPosition === "ผู้อำนวยการ" ? (
+                              <div>
+                                <Form.Control
+                                  type="text"
+                                  value={"รหัสประจำตัว : " + managerID}
+                                  className="modern-input fw-bold"
+                                  disabled
+                                />
+                              </div>
+                            ) : null}
                           </Col>
                         </Row>
 
@@ -622,7 +745,7 @@ function UserManagement() {
                               />
                             </Col>
                           </Row>
-                        ) : (
+                        ) : regPosition === "ครู" ? (
                           <Row className="mb-3">
                             <Col md={6}>
                               <Form.Control
@@ -633,7 +756,7 @@ function UserManagement() {
                               />
                             </Col>
                           </Row>
-                        )}
+                        ) : null}
 
                         <Row className="mb-3">
                           <Col>
@@ -655,6 +778,7 @@ function UserManagement() {
                             />
                           </Col>
                         </Row>
+                        
                         <Modal.Footer className="d-flex justify-content-center">
                           <Button
                             className="rounded-pill mt-2 edit-butt"

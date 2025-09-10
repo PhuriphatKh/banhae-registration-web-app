@@ -3,12 +3,13 @@ import { useNavigate } from "react-router";
 import { db } from "../firebase";
 import { onSnapshot, collection, doc } from "firebase/firestore";
 import { useUserAuth } from "../context/UserAuthContext";
+import "./StudentRecords.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import "./StudentRecords.css";
 
 function StudentRecords() {
   const [year, setYear] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(null);
   const [switchDisplay, setSwitchDisplay] = useState(false);
   const [studentId, setStudentId] = useState("");
   const [studentProfile, setStudentProfile] = useState(null);
@@ -53,9 +54,14 @@ function StudentRecords() {
   }, [user.uid]);
 
   useEffect(() => {
-    if (!classLevel) return;
+    if (!classLevel && !selectedYear) return;
 
-    const colRef = collection(db, "school_record", "2567", String(classLevel));
+    const colRef = collection(
+      db,
+      "school_record",
+      String(selectedYear),
+      String(classLevel)
+    );
 
     const unsubscribe = onSnapshot(colRef, (qSnap) => {
       const rows = qSnap.docs
@@ -78,9 +84,10 @@ function StudentRecords() {
     });
 
     return unsubscribe;
-  }, [db, classLevel, studentId]);
+  }, [db, classLevel, studentId, selectedYear]);
 
   const handleWatchRecords = async (e, yearId) => {
+    setSelectedYear(yearId);
     setSwitchDisplay(true);
   };
 
@@ -116,11 +123,11 @@ function StudentRecords() {
           <div className="d-flex flex-column justify-content-start align-items-start gap-1 custom-h3 fw-bold mb-3 ms-3">
             <div>รหัสนักเรียน: {studentId}</div>
             <div>
-              ชื่อ - สกุล: {studentProfile?.firstName ?? ""} {studentProfile?.lastName ?? ""}
+              ชื่อ - สกุล: {studentProfile?.firstName ?? ""}{" "}
+              {studentProfile?.lastName ?? ""}
             </div>
-            <div>
-              ชั้น: {studentProfile?.classLevel ?? ""}
-            </div>
+            <div>ชั้น: {studentProfile?.classLevel ?? ""}</div>
+            <div>เกรดเฉลี่ยสะสม (GPA): {studentProfile?.gpa ?? "-"}</div>
           </div>
 
           {!switchDisplay ? (
@@ -154,7 +161,8 @@ function StudentRecords() {
               <table className="student-records-table-2">
                 <thead>
                   <tr>
-                    <th>รายวิชา</th>
+                    <th>รหัสวิชา</th>
+                    <th>ชื่อวิชา</th>
                     <th>คะแนนเต็ม</th>
                     <th>คะแนนที่ได้</th>
                     <th>ระดับผลการเรียน</th>
@@ -163,6 +171,7 @@ function StudentRecords() {
                 <tbody>
                   {recordData.map((row, idx) => (
                     <tr key={row.subjectId}>
+                      <td>{row.subjectId}</td>
                       <td>
                         {subject.find((sub) => sub.id === row.subjectId)?.name}
                       </td>
@@ -171,14 +180,21 @@ function StudentRecords() {
                       <td>{row.student.result}</td>
                     </tr>
                   ))}
-                  <tr style={{ backgroundColor: "#ffd786" }}>
-                    <td colSpan={3} className="text-center fw-bold">
-                      เกรดเฉลี่ย
-                    </td>
-                    <td className="text-center">{gpa}</td>
+                  <tr style={{ backgroundColor: "#efefef" }}>
+                    <td className="text-center border-end" colSpan={3}></td>
+                    <td className="text-center fw-bold border-start border-end">เกรดเฉลี่ย</td>
+                    <td className="text-center fw-bold border-start">{gpa}</td>
                   </tr>
                 </tbody>
               </table>
+              <div className="d-flex justify-content-center align-items-center mt-3">
+                <button
+                  className="delete-butt"
+                  onClick={() => setSwitchDisplay(false)}
+                >
+                  กลับ
+                </button>
+              </div>
             </div>
           )}
         </div>

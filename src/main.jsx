@@ -17,9 +17,12 @@ import StudentTable from "./components/StudentTable.jsx";
 import GradeManagement from "./components/GradeManagement.jsx";
 import ManageSubjectScores from "./components/ManageSubjectScores.jsx";
 import EditUserProfile from "./components/EditUserProfile.jsx";
+import ManagerHome from "./components/ManagerHome.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import AdminRoute from "./auth/AdminRoute.jsx";
 import StudentRoute from "./auth/StudentRoute.jsx";
+import TeacherRoute from "./auth/TeacherRoute.jsx";
+import ManagerRoute from "./auth/ManagerRoute.jsx";
 import GuestRoute from "./auth/GuestRoute.jsx";
 import StudentRecords from "./components/StudentRecords.jsx";
 import "./index.css";
@@ -28,7 +31,6 @@ import { UserAuthContextProvider } from "./context/UserAuthContext.jsx";
 import { ProfileDataContextProvider } from "./context/ProfileDataContex.jsx";
 import { StudentTableContexProvider } from "./context/StudentTableContex.jsx";
 import { TeacherTableContexProvider } from "./context/TeacherTableContext.jsx";
-import { StudentGradesContexProvider } from "./context/StudentGradesContex.jsx";
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
@@ -49,6 +51,22 @@ const router = createBrowserRouter([
     element: <Register />,
   },
   {
+    path: "/profile",
+    element: (
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/usermanagement/profile",
+    element: (
+      <ProtectedRoute>
+        <EditUserProfile />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: "/home/นักเรียน",
     element: (
       <ProtectedRoute>
@@ -62,15 +80,19 @@ const router = createBrowserRouter([
     path: "/student-table",
     element: (
       <ProtectedRoute>
-        <StudentTable />
+        <StudentRoute>
+          <StudentTable />
+        </StudentRoute>
       </ProtectedRoute>
     ),
   },
-    {
+  {
     path: "/student-records",
     element: (
       <ProtectedRoute>
-        <StudentRecords />
+        <StudentRoute>
+          <StudentRecords />
+        </StudentRoute>
       </ProtectedRoute>
     ),
   },
@@ -78,7 +100,9 @@ const router = createBrowserRouter([
     path: "/home/ครู",
     element: (
       <ProtectedRoute>
-        <TeacherHome />
+        <TeacherRoute>
+          <TeacherHome />
+        </TeacherRoute>
       </ProtectedRoute>
     ),
   },
@@ -86,7 +110,9 @@ const router = createBrowserRouter([
     path: "/teacher-table",
     element: (
       <ProtectedRoute>
-        <TeacherTable />
+        <TeacherRoute>
+          <TeacherTable />
+        </TeacherRoute>
       </ProtectedRoute>
     ),
   },
@@ -94,7 +120,9 @@ const router = createBrowserRouter([
     path: "/grade-management",
     element: (
       <ProtectedRoute>
-        <GradeManagement />
+        <TeacherRoute>
+          <GradeManagement />
+        </TeacherRoute>
       </ProtectedRoute>
     ),
   },
@@ -102,20 +130,14 @@ const router = createBrowserRouter([
     path: "/grade-management/subject",
     element: (
       <ProtectedRoute>
-        <ManageSubjectScores />
+        <TeacherRoute>
+          <ManageSubjectScores />
+        </TeacherRoute>
       </ProtectedRoute>
     ),
   },
   {
-    path: "/profile",
-    element: (
-      <ProtectedRoute>
-        <Profile />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/home/admin",
+    path: "/home/แอดมิน",
     element: (
       <ProtectedRoute>
         <AdminRoute>
@@ -185,10 +207,12 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/usermanagement/profile",
+    path: "/home/ผู้อำนวยการ",
     element: (
       <ProtectedRoute>
-          <EditUserProfile />
+        <ManagerRoute>
+          <ManagerHome />
+        </ManagerRoute>
       </ProtectedRoute>
     ),
   },
@@ -201,9 +225,7 @@ ReactDOM.createRoot(root).render(
     <ProfileDataContextProvider>
       <StudentTableContexProvider>
         <TeacherTableContexProvider>
-          <StudentGradesContexProvider>
             <RouterProvider router={router} />
-          </StudentGradesContexProvider>
         </TeacherTableContexProvider>
       </StudentTableContexProvider>
     </ProfileDataContextProvider>

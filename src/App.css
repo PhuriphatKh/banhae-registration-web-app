@@ -17,7 +17,7 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .menu-container,
   .school-name {
     display: none !important;
@@ -36,12 +36,38 @@ input[type="number"]::-webkit-outer-spin-button {
     align-items: flex-end;
     margin-right: 10px;
   }
+
+  .dropdown-menu-2.inactive {
+    right: 10px;
+  }
+  .dropdown-menu-2.active {
+    right: 10px;
+  }
+
+  .manager-screen,
+  .manager-page-detail {
+    width: fit-content !important;
+  }
+
+  .graph-box {
+    margin-bottom: 1rem;
+  }
+}
+
+.graph-box {
+  width: 600px;
+  height: 500px;
+  padding: 10px;
+  background-color: #f0f2f5;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .page {
   min-height: 100vh;
 }
 
+.manager-page-detail,
 .page-detail {
   min-height: calc(100vh - 128px);
 }
@@ -61,6 +87,7 @@ input[type="number"]::-webkit-outer-spin-button {
 .student-page-detail-box {
   padding: 20px;
   gap: 20px;
+  min-width: 1600px;
   background-color: #d9d9d9;
   border-radius: 20px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -250,12 +277,13 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .profile-page {
+  min-width: fit-content;
   background-color: #d9d9d9;
 }
 
 .profile-detail {
   display: flex;
-  min-width: 1200px;
+  min-width: 768px;
   padding: 30px 70px;
   justify-content: center;
 }
@@ -919,4 +947,8 @@ input[type="number"]::-webkit-outer-spin-button {
   opacity: 1;
   visibility: visible;
   pointer-events: auto; /* ให้สามารถคลิกได้ */
+}
+
+.css-b62m3t-container {
+  width: 100% !important;
 }

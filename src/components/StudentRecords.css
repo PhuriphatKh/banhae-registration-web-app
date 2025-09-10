@@ -1,5 +1,6 @@
 .student-records {
   min-height: calc(100vh - 160px);
+  min-width: fit-content;
   padding: 1rem;
 }
 

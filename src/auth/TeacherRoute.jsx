@@ -2,14 +2,14 @@ import React from "react";
 import { Navigate } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 
-function AdminRoute({ children }) {
+function TeacherRoute({ children }) {
   const { userRole } = useUserAuth();
 
-  if (userRole !== "แอดมิน") {
+  if (userRole !== "ครู") {
     return <Navigate to={`/home/${userRole}`} />;
   }
 
   return children;
 }
 
-export default AdminRoute;
+export default TeacherRoute;

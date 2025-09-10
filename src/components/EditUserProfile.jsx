@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import Select from "react-select";
 import { useLocation, useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useUserProfile } from "../context/ProfileDataContex";
@@ -18,9 +19,15 @@ import {
   setDoc,
   onSnapshot,
   collection,
-  deleteField
+  runTransaction,
+  deleteField,
+  query,
+  orderBy,
 } from "firebase/firestore";
 import logo from "../assets/logo.png";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import "./EditUserProfile.css"; // เพิ่ม CSS สำหรับ modal review
 
 function EditUserProfile() {
   //
@@ -33,14 +40,15 @@ function EditUserProfile() {
   const [regPosition, setRegPosition] = useState("");
   const [regClassLevel, setRegClassLevel] = useState("");
   const [regTaughtSubjects, setRegTaughtSubjects] = useState([""]);
-  const [regBirthday, setRegBirthday] = useState("");
   const [regAge, setRegAge] = useState(0);
-  const [regBornAt, setRegBornAt] = useState("");
-  const [regNationality, setRegNationality] = useState("");
-  const [regEthnicity, setRegEthnicity] = useState("");
-  const [regReligion, setRegReligion] = useState("");
+  const [gender, setGender] = useState("");
   const [regIDCard, setRegIDCard] = useState(0);
+  const [regBornAt, setRegBornAt] = useState("");
+  const [regBirthday, setRegBirthday] = useState("");
+  const [regReligion, setRegReligion] = useState("");
+  const [regEthnicity, setRegEthnicity] = useState("");
   const [regBirthOrder, setRegBirthOrder] = useState(0);
+  const [regNationality, setRegNationality] = useState("");
   const [regSiblingsCount, setRegSiblingsCount] = useState(0);
   //
   const [regHouseNum, setRegHouseNum] = useState("");
@@ -90,6 +98,7 @@ function EditUserProfile() {
   const [regParentNum, setRegParentNum] = useState("");
   //
   const [subjects, setSubjects] = useState([]);
+  const [vacantSubjects, setVacantSubjects] = useState([]);
   const [prevTaughtSubject, setPrevTaughtSubject] = useState("");
 
   const [provinces, setProvinces] = useState([]);
@@ -134,12 +143,29 @@ function EditUserProfile() {
   const [open5, setOpen5] = useState(false);
   const [open6, setOpen6] = useState(false);
 
-  let menuRef1 = useRef();
-  let menuRef2 = useRef();
-  let menuRef3 = useRef();
-  let menuRef4 = useRef();
-  let menuRef5 = useRef();
-  let menuRef6 = useRef();
+  let menuRef1 = useRef(null);
+  let menuRef2 = useRef(null);
+  let menuRef3 = useRef(null);
+  let menuRef4 = useRef(null);
+  let menuRef5 = useRef(null);
+  let menuRef6 = useRef(null);
+
+  // --------- Small helper: cached fetch for JSON used by many effects ----------
+  const jsonCache = useRef({});
+  const fetchJSON = async (url) => {
+    if (jsonCache.current[url]) return jsonCache.current[url];
+    const res = await fetch(url).then((r) => r.json());
+    jsonCache.current[url] = res;
+    return res;
+  };
+
+  // Reuse urls
+  const PROVINCE_URL =
+    "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json";
+  const AMPHURE_URL =
+    "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json";
+  const TAMBON_URL =
+    "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json";
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -147,6 +173,7 @@ function EditUserProfile() {
     if (id) setProfileID(id);
   }, [location.search]);
 
+  // ค้นหาข้อมูลโปรไฟล์
   useEffect(() => {
     if (!profileID) return;
 
@@ -166,7 +193,13 @@ function EditUserProfile() {
         setRegEthnicity(newData.user?.ethnicity || "");
         setRegNationality(newData.user?.nationality || "");
         setRegBirthday(newData.user?.birthDate || "");
+        setRegAge(newData.user?.age || 0);
+        setGender(newData.user?.gender || "");
+        setRegBornAt(newData.user?.bornAt || "");
         setRegTeleNum(newData.address?.user?.teleNum || "");
+        setRegIDCard(newData.user?.IDCard || 0);
+        setRegBirthOrder(newData.user?.birthOrder || 0);
+        setRegSiblingsCount(newData.user?.siblingsCount || 0);
 
         setRegFatherName(newData.father?.fullName || "");
         setRegOccupation1(newData.father?.occupation || "");
@@ -191,14 +224,13 @@ function EditUserProfile() {
           setRegTaughtSubjects([newData.user?.taughtSubject || ""]);
           setPrevTaughtSubject([newData.user?.taughtSubject || ""]);
         }
-
-        console.log("ProfileData:", newData);
       }
     );
 
     return () => unsubscribe();
   }, [profileID]);
 
+  // ค้นหาข้อมูลที่อยู่
   useEffect(() => {
     if (!profileID) return;
 
@@ -248,124 +280,146 @@ function EditUserProfile() {
         setRegProvince3(newData.parent?.province || "");
         setRegZipcode3(newData.parent?.zipcode || "");
         setRegParentNum(newData.parent?.parentNum || "");
-
-        console.log("AddressData:", newData);
       }
     );
 
     return () => unsubscribe();
   }, [profileID]);
 
+  // ดึงข้อมูลวิชา
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "subjects"), (snapshot) => {
-      const newData = [];
-      snapshot.forEach((doc) => {
-        newData.push({ id: doc.id, ...doc.data() });
-      });
-      if (newData.length === 0) return;
-
-      setSubjects(newData);
-      console.log("Subjects updated:", newData);
+    const q = query(collection(db, "subjects"), orderBy("classLevel", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setSubjects(rows);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // ที่อยู่ ---------------------------------------------------- //
+  // วิชาว่าง
   useEffect(() => {
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json"
-    )
-      .then((res) => res.json())
-      .then(setProvinces);
+    const unsubscribe = onSnapshot(collection(db, "subjects"), (snapshot) => {
+      const rows = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const vacant = rows.filter(
+        (s) =>
+          !Object.prototype.hasOwnProperty.call(s, "teacherId") ||
+          s.teacherId == null
+      );
+      setVacantSubjects(vacant);
+    });
+    return () => unsubscribe();
   }, []);
 
+  // ---------------------------------------------------------------- //
+  // Consolidated/faster fetches with caching to reduce repeated network calls
   useEffect(() => {
-    if (!regProvince) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json"
-    )
-      .then((res) => res.json())
+    let mounted = true;
+    fetchJSON(PROVINCE_URL)
       .then((data) => {
+        if (!mounted) return;
+        // set all province states once (keeps behavior)
+        setProvinces(data);
+        setProvinces1(data);
+        setProvinces2(data);
+        setProvinces3(data);
+      })
+      .catch((err) => console.log("province load error", err));
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // amphures for current user address
+  useEffect(() => {
+    if (!regProvince) {
+      setAmphures([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(AMPHURE_URL)
+      .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (a) => a.province_id === parseInt(regProvince)
         );
         setAmphures(filtered);
-        // setRegDistrict(""); // reset
-        // setRegSubDistrict(""); // reset
-      });
+      })
+      .catch((err) => console.log("amphure load error", err));
+    return () => (mounted = false);
   }, [regProvince]);
 
+  // districts for current user address
   useEffect(() => {
-    if (!regDistrict) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    if (!regDistrict) {
+      setDistricts([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (d) => d.amphure_id === parseInt(regDistrict)
         );
         setDistricts(filtered);
-        // setRegSubDistrict(""); // reset
-      });
+      })
+      .catch((err) => console.log("tambon load error", err));
+    return () => (mounted = false);
   }, [regDistrict]);
 
   useEffect(() => {
     if (!regSubDistrict) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const selectedSubDistrict = data.find(
           (d) => d.id === parseInt(regSubDistrict)
         );
         if (selectedSubDistrict) {
           setRegZipcode(selectedSubDistrict.zip_code); // กำหนดรหัสไปรษณีย์
         }
-      });
+      })
+      .catch((err) => console.log("tambon zipcode error", err));
+    return () => (mounted = false);
   }, [regSubDistrict]);
-  // ---------------------------------------------------------------- //
 
   // ที่อยู่เกิด ---------------------------------------------------- //
   useEffect(() => {
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json"
-    )
-      .then((res) => res.json())
-      .then(setProvinces1);
-  }, []);
-
-  useEffect(() => {
-    if (!regBirthProvinceID) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json"
-    )
-      .then((res) => res.json())
+    if (!regBirthProvinceID) {
+      setAmphures1([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(AMPHURE_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (a) => a.province_id === parseInt(regBirthProvinceID)
         );
         setAmphures1(filtered);
-        // setRegDistrict(""); // reset
-        // setRegSubDistrict(""); // reset
-      });
+      })
+      .catch((err) => console.log("birth amphure error", err));
+    return () => (mounted = false);
   }, [regBirthProvinceID]);
 
   useEffect(() => {
-    if (!regBirthDistrictID) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    if (!regBirthDistrictID) {
+      setDistricts1([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (d) => d.amphure_id === parseInt(regBirthDistrictID)
         );
         setDistricts1(filtered);
-        // setRegSubDistrict(""); // reset
-      });
+      })
+      .catch((err) => console.log("birth tambon error", err));
+    return () => (mounted = false);
   }, [regBirthDistrictID]);
 
   useEffect(() => {
@@ -374,6 +428,8 @@ function EditUserProfile() {
     );
     if (province) {
       setBirthProvince("จังหวัด" + province.name_th);
+    } else {
+      setBirthProvince("");
     }
 
     const district = amphures1.find(
@@ -381,58 +437,69 @@ function EditUserProfile() {
     );
     if (district) {
       setBirthDistrict(district.name_th);
+    } else {
+      setBirthDistrict("");
     }
 
     const subdistrict = districts1.find(
-      (a) => a.id === parseInt(regBirthSubDistrictID)
+      (d) => d.id === parseInt(regBirthSubDistrictID)
     );
     if (subdistrict) {
       setBirthSubDistrict(subdistrict.name_th);
+    } else {
+      setBirthSubDistrict("");
     }
-  }, [regBirthProvinceID, regBirthDistrictID, regBirthSubDistrictID]);
+  }, [
+    regBirthProvinceID,
+    regBirthDistrictID,
+    regBirthSubDistrictID,
+    provinces1,
+    amphures1,
+    districts1,
+  ]);
 
   useEffect(() => {
     setRegBornAt(
       regBirthSubDistrict + " " + regBirthDistrict + " " + regBirthProvince
     );
-  });
+  }, [regBirthSubDistrict, regBirthDistrict, regBirthProvince]);
   // ---------------------------------------------------------------- //
 
   // --- useEffect สำหรับบิดา ---
   useEffect(() => {
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json"
-    )
-      .then((res) => res.json())
-      .then(setProvinces1);
-  }, []);
-
-  useEffect(() => {
-    if (!regProvince1) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json"
-    )
-      .then((res) => res.json())
+    if (!regProvince1) {
+      setAmphures1((prev) => prev); // keep existing if any
+      return;
+    }
+    let mounted = true;
+    fetchJSON(AMPHURE_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (a) => a.province_id === parseInt(regProvince1)
         );
         setAmphures1(filtered);
-      });
+      })
+      .catch((err) => console.log("father amphure error", err));
+    return () => (mounted = false);
   }, [regProvince1]);
 
   useEffect(() => {
-    if (!regDistrict1) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    if (!regDistrict1) {
+      setDistricts1([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (d) => d.amphure_id === parseInt(regDistrict1)
         );
         setDistricts1(filtered);
-      });
+      })
+      .catch((err) => console.log("father tambon error", err));
+    return () => (mounted = false);
   }, [regDistrict1]);
 
   useEffect(() => {
@@ -443,55 +510,56 @@ function EditUserProfile() {
       !districts1.length
     )
       return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const selectedSubDistrict = data.find(
           (d) => d.id === parseInt(regSubDistrict1)
         );
         if (selectedSubDistrict) {
           setRegZipcode1(selectedSubDistrict.zip_code); // กำหนดรหัสไปรษณีย์
         }
-      });
+      })
+      .catch((err) => console.log("father zipcode error", err));
+    return () => (mounted = false);
   }, [regSubDistrict1, provinces1, amphures1, districts1]);
 
   // --- useEffect สำหรับมารดา ---
   useEffect(() => {
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json"
-    )
-      .then((res) => res.json())
-      .then(setProvinces2);
-  }, []);
-
-  useEffect(() => {
-    if (!regProvince2) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json"
-    )
-      .then((res) => res.json())
+    if (!regProvince2) {
+      setAmphures2([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(AMPHURE_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (a) => a.province_id === parseInt(regProvince2)
         );
         setAmphures2(filtered);
-      });
+      })
+      .catch((err) => console.log("mother amphure error", err));
+    return () => (mounted = false);
   }, [regProvince2]);
 
   useEffect(() => {
-    if (!regDistrict2) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    if (!regDistrict2) {
+      setDistricts2([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (d) => d.amphure_id === parseInt(regDistrict2)
         );
         setDistricts2(filtered);
-      });
+      })
+      .catch((err) => console.log("mother tambon error", err));
+    return () => (mounted = false);
   }, [regDistrict2]);
 
   useEffect(() => {
@@ -502,55 +570,56 @@ function EditUserProfile() {
       !districts2.length
     )
       return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const selectedSubDistrict = data.find(
           (d) => d.id === parseInt(regSubDistrict2)
         );
         if (selectedSubDistrict) {
           setRegZipcode2(selectedSubDistrict.zip_code); // กำหนดรหัสไปรษณีย์
         }
-      });
+      })
+      .catch((err) => console.log("mother zipcode error", err));
+    return () => (mounted = false);
   }, [regSubDistrict2, provinces2, amphures2, districts2]);
 
   // --- useEffect สำหรับผู้ปกครอง ---
   useEffect(() => {
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province.json"
-    )
-      .then((res) => res.json())
-      .then(setProvinces3);
-  }, []);
-
-  useEffect(() => {
-    if (!regProvince3) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_amphure.json"
-    )
-      .then((res) => res.json())
+    if (!regProvince3) {
+      setAmphures3([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(AMPHURE_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (a) => a.province_id === parseInt(regProvince3)
         );
         setAmphures3(filtered);
-      });
+      })
+      .catch((err) => console.log("parent amphure error", err));
+    return () => (mounted = false);
   }, [regProvince3]);
 
   useEffect(() => {
-    if (!regDistrict3) return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    if (!regDistrict3) {
+      setDistricts3([]);
+      return;
+    }
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const filtered = data.filter(
           (d) => d.amphure_id === parseInt(regDistrict3)
         );
         setDistricts3(filtered);
-      });
+      })
+      .catch((err) => console.log("parent tambon error", err));
+    return () => (mounted = false);
   }, [regDistrict3]);
 
   useEffect(() => {
@@ -561,61 +630,49 @@ function EditUserProfile() {
       !districts3.length
     )
       return;
-    fetch(
-      "https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_tambon.json"
-    )
-      .then((res) => res.json())
+    let mounted = true;
+    fetchJSON(TAMBON_URL)
       .then((data) => {
+        if (!mounted) return;
         const selectedSubDistrict = data.find(
           (d) => d.id === parseInt(regSubDistrict3)
         );
         if (selectedSubDistrict) {
           setRegZipcode3(selectedSubDistrict.zip_code); // กำหนดรหัสไปรษณีย์
         }
-      });
+      })
+      .catch((err) => console.log("parent zipcode error", err));
+    return () => (mounted = false);
   }, [regSubDistrict3, provinces3, amphures3, districts3]);
 
   useEffect(() => {
-    let handler = (e) => {
-      if (!menuRef1.current.contains(e.target)) {
+    const handler = (e) => {
+      if (menuRef1.current && !menuRef1.current.contains(e.target))
         setOpen1(false);
-      }
-
-      if (!menuRef2.current.contains(e.target)) {
+      if (menuRef2.current && !menuRef2.current.contains(e.target))
         setOpen2(false);
-      }
-
-      if (!menuRef3.current.contains(e.target)) {
+      if (menuRef3.current && !menuRef3.current.contains(e.target))
         setOpen3(false);
-      }
-
-      if (!menuRef4.current.contains(e.target)) {
+      if (menuRef4.current && !menuRef4.current.contains(e.target))
         setOpen4(false);
-      }
-
-      if (!menuRef5.current.contains(e.target)) {
+      if (menuRef5.current && !menuRef5.current.contains(e.target))
         setOpen5(false);
-      }
-
-      if (!menuRef6.current.contains(e.target)) {
+      if (menuRef6.current && !menuRef6.current.contains(e.target))
         setOpen6(false);
-      }
     };
-
     document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-    return () => {
-      document.removeEventListener("mousedown", handler);
-    };
-  });
-
-  const handleLogout = async () => {
-    try {
-      await logOut();
-      navigate("/");
-    } catch (err) {
-      console.log(err.message);
+  const handleAgeCount = (birthDate) => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
     }
+    setRegAge(age);
   };
 
   const handleSubmit = async (e) => {
@@ -629,29 +686,42 @@ function EditUserProfile() {
           firstName: regFirstName,
           lastName: regLastName,
           position: regPosition,
-          classLevel: regClassLevel,
-          taughtSubject: regTaughtSubjects,
           birthDate: regBirthday,
+          age: regAge,
+          gender: gender,
           ethnicity: regEthnicity,
           nationality: regNationality,
           religion: regReligion,
+          IDCard: regIDCard,
+          ...(regPosition === "นักเรียน" && {
+            classLevel: regClassLevel,
+            bornAt: regBornAt,
+          }),
         },
-        father: {
+      };
+
+      if (regPosition === "นักเรียน") {
+        userProfile.user = {
+          ...userProfile.user,
+          birthOrder: regBirthOrder,
+          siblingsCount: regSiblingsCount,
+        };
+        userProfile.father = {
           fullName: regFatherName,
           occupation: regOccupation1,
           monthlyIncome: regMonthlyIncome1,
-        },
-        mother: {
+        };
+        userProfile.mother = {
           fullName: regMotherName,
           occupation: regOccupation2,
           monthlyIncome: regMonthlyIncome2,
-        },
-        parent: {
+        };
+        userProfile.parent = {
           fullName: regParentName,
           occupation: regOccupation3,
           monthlyIncome: regMonthlyIncome3,
-        },
-      };
+        };
+      }
 
       // ข้อมูลที่อยู่ของผู้ใช้, พ่อ, แม่, และผู้ปกครอง
       const selectedProvince = provinces.find(
@@ -711,7 +781,10 @@ function EditUserProfile() {
           zipcode: regZipcode,
           teleNum: regTeleNum,
         },
-        father: {
+      };
+
+      if (regPosition === "นักเรียน") {
+        userAddress.father = {
           houseNum: regHouseNum1,
           villageNum: regVillageNum1,
           road: regRoad1,
@@ -725,8 +798,8 @@ function EditUserProfile() {
           provinceName: selectedProvince1 ? selectedProvince1.name_th : "",
           zipcode: regZipcode1,
           fatherNum: regFatherNum,
-        },
-        mother: {
+        };
+        userAddress.mother = {
           houseNum: regHouseNum2,
           villageNum: regVillageNum2,
           road: regRoad2,
@@ -740,8 +813,8 @@ function EditUserProfile() {
           provinceName: selectedProvince2 ? selectedProvince2.name_th : "",
           zipcode: regZipcode2,
           motherNum: regMotherNum,
-        },
-        parent: {
+        };
+        userAddress.parent = {
           houseNum: regHouseNum3,
           villageNum: regVillageNum3,
           road: regRoad3,
@@ -755,19 +828,12 @@ function EditUserProfile() {
           provinceName: selectedProvince3 ? selectedProvince3.name_th : "",
           zipcode: regZipcode3,
           parentNum: regParentNum,
-        },
-      };
+        };
+      }
 
       setFormData1(userProfile);
       setFormData2(userAddress);
       setShowModal(true);
-
-      // บันทึกข้อมูลโปรไฟล์ลง Firestore
-      // await setDoc(doc(db, "profile", profileID), userProfile, { merge: true });
-      // บันทึกข้อมูลที่อยู่ของผู้ใช้ลง Firestore
-      // await setDoc(doc(db, "address", profileID), userAddress, { merge: true });
-
-      // console.log("Data updated successfully in Firestore!");
     } catch (err) {
       setError(err.message);
       console.log(err);
@@ -776,56 +842,77 @@ function EditUserProfile() {
 
   const handleConfirmSave = async () => {
     try {
-      // ถ้าเปลี่ยนวิชาที่สอน ให้ลบ teacher ออกจากวิชาเดิม
-      if (prevTaughtSubject && Array.isArray(prevTaughtSubject)) {
-        prevTaughtSubject.forEach(async (subjId) => {
-          if (!regTaughtSubjects.includes(subjId)) {
-        // ดึงข้อมูลวิชาเดิม
-        const subjDoc = await getDoc(doc(db, "subjects", subjId));
-        if (subjDoc.exists()) {
-          const teachersArr = Array.isArray(subjDoc.data().teachers)
-            ? subjDoc.data().teachers
-            : [];
-          // ลบ profileID ออกจาก array
-          const updatedTeachers = teachersArr.filter((id) => id !== profileID);
-          await setDoc(
-            doc(db, "subjects", subjId),
-            { teachers: updatedTeachers },
-            { merge: true }
+      // ซิงก์ครู↔วิชา เฉพาะถ้าบุคคลนี้เป็น "ครู"
+      if (regPosition === "ครู") {
+        // ครู 1 คนสอนได้หลายวิชา แต่ 1 วิชามีครูได้แค่คนเดียว
+        const prev = new Set((prevTaughtSubject ?? []).filter(Boolean));
+        const next = new Set((regTaughtSubjects ?? []).filter(Boolean));
+
+        const toRemove = [...prev].filter((id) => !next.has(id));
+        const toAdd = [...next].filter((id) => !prev.has(id));
+
+        // เอาครูออกจากวิชาที่เลิกสอน (เฉพาะถ้าวิชานั้นผูกกับครูคนนี้จริง)
+        await Promise.all(
+          toRemove.map(async (subjId) => {
+            const ref = doc(db, "subjects", subjId);
+            await runTransaction(db, async (tx) => {
+              const snap = await tx.get(ref);
+              if (!snap.exists()) return;
+              if (snap.data().teacherId === profileID) {
+                tx.update(ref, { teacherId: deleteField() });
+              }
+            });
+          })
+        );
+
+        // ผูกครูเข้าวิชาใหม่ (ถ้าวิชายังว่างหรือเป็นคนเดิม)
+        const conflicts = [];
+        await Promise.all(
+          toAdd.map(async (subjId) => {
+            const ref = doc(db, "subjects", subjId);
+            await runTransaction(db, async (tx) => {
+              const snap = await tx.get(ref);
+              if (!snap.exists()) {
+                // ยังไม่มีเอกสารวิชา → สร้างและผูกครู
+                tx.set(ref, { teacherId: profileID }, { merge: true });
+                return;
+              }
+              const cur = snap.data().teacherId;
+              if (!cur || cur === profileID) {
+                tx.update(ref, { teacherId: profileID });
+              } else {
+                // มีครูคนอื่นอยู่แล้ว → เก็บไว้แจ้งเตือน
+                conflicts.push({ subjId, currentTeacherId: cur });
+              }
+            });
+          })
+        );
+
+        // อัปเดตรายการวิชาที่สอนในโปรไฟล์ (สำหรับ UI)
+        await setDoc(
+          doc(db, "profile", profileID),
+          { user: { taughtSubject: [...next] } },
+          { merge: true }
+        );
+
+        if (conflicts.length) {
+          setError(
+            `วิชาต่อไปนี้มีครูคนอื่นอยู่แล้ว: ${conflicts
+              .map((c) => c.subjId)
+              .join(", ")}`
           );
         }
-          }
-        });
+
+        // เก็บสถานะล่าสุดไว้เทียบรอบหน้า
+        setPrevTaughtSubject([...next]);
       }
-      // เพิ่ม teacher ในวิชาใหม่
-      if (regTaughtSubjects && Array.isArray(regTaughtSubjects)) {
-        regTaughtSubjects.forEach(async (subjId) => {
-          if (subjId) {
-        const subjDoc = await getDoc(doc(db, "subjects", subjId));
-        let teachersArr = [];
-        if (subjDoc.exists()) {
-          teachersArr = Array.isArray(subjDoc.data().teachers)
-            ? subjDoc.data().teachers
-            : [];
-        }
-        // เพิ่ม profileID ถ้ายังไม่มี
-        if (!teachersArr.includes(profileID)) {
-          teachersArr.push(profileID);
-          await setDoc(
-            doc(db, "subjects", subjId),
-            { teachers: teachersArr },
-            { merge: true }
-          );
-        }
-          }
-        });
-      }
-      // บันทึกข้อมูลใน Firestore
+
+      // บันทึกข้อมูลโปรไฟล์/ที่อยู่ตามเดิม
       await setDoc(doc(db, "profile", profileID), formData1, { merge: true });
       await setDoc(doc(db, "address", profileID), formData2, { merge: true });
+
       console.log("Data saved successfully!");
       setShowModal(false);
-      setPrevTaughtSubject(regTaughtSubjects);
     } catch (err) {
       setError(err.message);
       console.log(err);
@@ -836,130 +923,78 @@ function EditUserProfile() {
     setShowModal(false);
   };
 
+  // --- helper: render nested review data for modal ---
+  const renderValue = (val) => {
+    if (val == null || val === "") return <em className="text-muted">-</em>;
+    if (Array.isArray(val))
+      return val.length ? val.join(", ") : <em className="text-muted">-</em>;
+    if (typeof val === "object") return renderObject(val);
+    return String(val);
+  };
+
+  const renderObject = (obj) =>
+    Object.keys(obj || {}).map((key) => {
+      const value = obj[key];
+      // skip empty nested objects
+      if (
+        value == null ||
+        (typeof value === "object" &&
+          !Array.isArray(value) &&
+          Object.keys(value).length === 0)
+      ) {
+        return null;
+      }
+      return (
+        <p key={key} style={{ marginBottom: 4 }}>
+          <strong style={{ textTransform: "capitalize" }}>
+            {key.replace(/([A-Z])/g, " $1")}:{" "}
+          </strong>
+          {renderValue(value)}
+        </p>
+      );
+    });
+
+  // ใหม่: สร้าง list-style review เพื่อใช้ใน modal (UI สวยงามขึ้น)
+  const renderKeyValueList = (obj) => {
+    if (!obj || Object.keys(obj).length === 0)
+      return <em className="text-muted">-</em>;
+    return (
+      <ul className="list-group review-list">
+        {Object.keys(obj).map((k) => {
+          const v = obj[k];
+          return (
+            <li
+              key={k}
+              className="list-group-item d-flex align-items-start"
+            >
+              <Row className="w-100">
+                <Col xs={4} className="review-key">
+                  {k.replace(/([A-Z])/g, " $1")}
+                </Col>
+                <Col xs={8} className="review-value">
+                  {renderValue(v)}
+                </Col>
+              </Row>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  const options = useMemo(
+    () => subjects.map((s) => ({ value: s.id, ...s })),
+    [subjects]
+  );
+
+  const vacantIdSet = useMemo(
+    () => new Set((vacantSubjects ?? []).map((s) => s.id)),
+    [vacantSubjects]
+  );
+
   return (
-    <div className="screen">
-      <div className="nav">
-        <div className="logo-container">
-          <div className="logo-img">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="47"
-              height="46"
-              viewBox="0 0 47 46"
-              fill="none"
-            >
-              <ellipse cx="23.5" cy="23" rx="23.5" ry="23" fill="white" />
-            </svg>
-            <img src={logo} alt="logo" className="w-100 h-100" />
-          </div>
-          <div className="custom-h2">โรงเรียนบ้านแฮะ</div>
-        </div>
-
-        <div className="menu-container">
-          {/* เมนู ทะเบียน */}
-          <div className="dropdown" ref={menuRef2}>
-            <div className="dropdown-trigger" onClick={() => setOpen2(!open2)}>
-              <div className="custom-h5">ทะเบียน</div>
-              <svg
-                className={`dropdown-icon ${open2 ? "rotate" : ""}`}
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-            <div
-              className={`dropdown-content ${open2 ? "active" : "inactive"}`}
-            >
-              <Link to="/profile">ข้อมูลส่วนตัว</Link>
-              <Link to="/usermanagement">จัดการข้อมูลผู้ใช้</Link>
-              <Link to="/subjects-management">จัดการรายวิชา</Link>
-              <Link to="/time-table-management">จัดการตารางเวลา</Link>
-              <Link to="/student-table-management">จัดการตารางเรียน</Link>
-              <Link to="/teacher-table-management">จัดการตารางสอน</Link>
-            </div>
-          </div>
-
-          {/* เมนู ประมวลผล */}
-          <div className="dropdown" ref={menuRef3}>
-            <div className="dropdown-trigger" onClick={() => setOpen3(!open3)}>
-              <div className="custom-h5">ประมวลผลการเรียน</div>
-              <svg
-                className={`dropdown-icon ${open3 ? "rotate" : ""}`}
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-            <div
-              className={`dropdown-content ${open3 ? "active" : "inactive"}`}
-            >
-              <Link to="/school-record-management">จัดการผลการเรียน</Link>
-            </div>
-          </div>
-
-          {/* เมนู คำร้อง */}
-          <div className="dropdown">
-            <div className="dropdown-trigger">
-              <div className="custom-h5">คำร้อง</div>
-              <svg
-                className="dropdown-icon"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5H7z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* โปรไฟล์ */}
-        <div className="dropdown-container" ref={menuRef1}>
-          <div className="dropdown-trigger" onClick={() => setOpen1(!open1)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                fill="black"
-              />
-            </svg>
-            <div className="custom-h5">{firstName}</div>
-          </div>
-          <div className={`dropdown-menu-2 ${open1 ? "active" : "inactive"}`}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M4 22C4 19.8783 4.84285 17.8434 6.34315 16.3431C7.84344 14.8429 9.87827 14 12 14C14.1217 14 16.1566 14.8429 17.6569 16.3431C19.1571 17.8434 20 19.8783 20 22H4ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13Z"
-                fill="black"
-              />
-            </svg>
-            <div className="custom-h4">
-              {firstName} {lastName}
-            </div>
-            <button
-              className="logout-button"
-              type="button"
-              onClick={handleLogout}
-            >
-              <div className="custom-h5">ออกจากระบบ</div>
-            </button>
-          </div>
-        </div>
-      </div>
+    <div>
+      <Navbar />
 
       <Form onSubmit={handleSubmit} className="bg-light p-5 rounded-4 shadow">
         <h2 className="text-center fw-bold mb-4">แก้ไขข้อมูลผู้ใช้</h2>
@@ -984,6 +1019,7 @@ function EditUserProfile() {
               />
             </Col>
           </Row>
+
           <Row className="mb-3">
             <Col md={6}>
               <Form.Label>ตำแหน่ง</Form.Label>
@@ -999,32 +1035,59 @@ function EditUserProfile() {
                   <Form.Label>วิชาที่สอน</Form.Label>
                   {regTaughtSubjects.map((subjectId, idx) => (
                     <div key={idx} className="d-flex align-items-center mb-2">
-                      <Form.Select
-                        value={subjectId}
-                        onChange={e => {
+                      <Select
+                        value={
+                          options.find((o) => o.value === subjectId) ?? null
+                        }
+                        onChange={(opt) => {
                           const newArr = [...regTaughtSubjects];
-                          newArr[idx] = e.target.value;
+                          newArr[idx] = opt?.value ?? "";
                           setRegTaughtSubjects(newArr);
                         }}
-                      >
-                        <option value="" disabled>
-                          -- เลือกวิชาที่สอน --
-                        </option>
-                        {subjects.map((subject) => (
-                          <option key={subject.id} value={subject.id}>
-                            {subject.id} {subject.name}
-                          </option>
-                        ))}
-                      </Form.Select>
+                        options={options}
+                        getOptionValue={(o) => o.value}
+                        formatOptionLabel={(o) => (
+                          <div
+                            style={{
+                              gap: 8,
+                              display: "grid",
+                              textAlign: "center",
+                              gridTemplateColumns: "1fr 3fr 1fr",
+                            }}
+                          >
+                            <span className="text-truncate">{o.id}</span>
+                            <span className="text-truncate">{o.name}</span>
+                            <span className="text-truncate">
+                              {o.classLevel}
+                            </span>
+                          </div>
+                        )}
+                        styles={{
+                          control: (base) => ({ ...base, width: "100%" }),
+                        }}
+                        // ถ้ายังโหลดไม่เสร็จ (vacantSubjects === null) จะไม่ disable อะไรชั่วคราว
+                        isOptionDisabled={(o) => {
+                          if (!vacantSubjects) return false;
+                          const isVacant = vacantIdSet.has(o.value);
+                          const isSelected = o.value === subjectId; // ปล่อย option ที่เลือกอยู่ให้คลิกดูได้
+                          return !isVacant && !isSelected;
+                        }}
+                        isLoading={!vacantSubjects}
+                      />
+
                       {regTaughtSubjects.length > 1 && (
                         <Button
                           variant="danger"
                           size="sm"
                           className="ms-2"
                           onClick={() => {
-                            setRegTaughtSubjects(regTaughtSubjects.filter((_, i) => i !== idx));
+                            setRegTaughtSubjects(
+                              regTaughtSubjects.filter((_, i) => i !== idx)
+                            );
                           }}
-                        >ลบ</Button>
+                        >
+                          ลบ
+                        </Button>
                       )}
                     </div>
                   ))}
@@ -1032,8 +1095,12 @@ function EditUserProfile() {
                   <Button
                     size="sm"
                     className="edit-butt"
-                    onClick={() => setRegTaughtSubjects([...regTaughtSubjects, ""])}
-                  >เพิ่มวิชาที่สอน</Button>
+                    onClick={() =>
+                      setRegTaughtSubjects([...regTaughtSubjects, ""])
+                    }
+                  >
+                    เพิ่มวิชาที่สอน
+                  </Button>
                 </>
               )}
               {regPosition === "นักเรียน" && (
@@ -1048,91 +1115,139 @@ function EditUserProfile() {
               )}
             </Col>
           </Row>
+
           <Row className="mb-3">
             <Col md={3}>
               <Form.Label>วันเกิด</Form.Label>
               <Form.Control
                 type="date"
                 value={regBirthday}
-                onChange={(e) => setRegBirthday(e.target.value)}
+                onChange={(e) => {
+                  setRegBirthday(e.target.value);
+                  handleAgeCount(e.target.value);
+                }}
               />
             </Col>
             <Col md={3}>
               <Form.Label>อายุ</Form.Label>
-              <Form.Control disabled />
+              <Form.Control value={regAge} disabled />
             </Col>
-            <Col md={6} className="position-relative">
-              <Form.Label>เกิดที่</Form.Label>
-              <Form.Control
-                value={regBornAt}
-                onClick={() => setOpen4(!open4)}
-                readOnly
-              />
-              <div
-                ref={menuRef4}
-                className={`birth-address-1 ${open4 ? "active" : "inactive"}`}
-              >
-                {provinces1.map((p) => (
-                  <option
-                    key={p.id}
-                    value={p.id}
-                    onClick={(e) => {
-                      setOpen5(!open5), setBirthProvinceID(e.target.value);
-                    }}
+            {regPosition === "นักเรียน" ? (
+              <>
+                <Col md={3} className="position-relative">
+                  <Form.Label>เพศ</Form.Label>
+                  <Form.Select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
                   >
-                    {p.name_th}
-                  </option>
-                ))}
-              </div>
-              <div
-                ref={menuRef5}
-                className={`birth-address-2 ${open5 ? "active" : "inactive"}`}
-              >
-                {amphures1.map((a) => (
-                  <option
-                    key={a.id}
-                    value={a.id}
-                    onClick={(e) => {
-                      setOpen6(!open6), setBirthDistrictID(e.target.value);
-                    }}
+                    <option value="">-- เลือกเพศ --</option>
+                    <option value="ชาย">ชาย</option>
+                    <option value="หญิง">หญิง</option>
+                  </Form.Select>
+                </Col>
+                <Col md={3} className="position-relative">
+                  <Form.Label>เกิดที่</Form.Label>
+                  <Form.Control
+                    value={regBornAt}
+                    onClick={() => setOpen4(!open4)}
+                    readOnly
+                  />
+                  <div
+                    ref={menuRef4}
+                    className={`birth-address-1 ${
+                      open4 ? "active" : "inactive"
+                    }`}
                   >
-                    {a.name_th}
-                  </option>
-                ))}
-              </div>
-              <div
-                ref={menuRef6}
-                className={`birth-address-3 ${open6 ? "active" : "inactive"}`}
-              >
-                {districts1.map((d) => (
-                  <option
-                    key={d.id}
-                    value={d.id}
-                    onClick={(e) => {
-                      setOpen6(!open6), setBirthSubDistrictID(e.target.value);
-                    }}
+                    {provinces1.map((p) => (
+                      <option
+                        key={p.id}
+                        value={p.id}
+                        onClick={(e) => {
+                          setOpen5(!open5), setBirthProvinceID(e.target.value);
+                        }}
+                      >
+                        {p.name_th}
+                      </option>
+                    ))}
+                  </div>
+                  <div
+                    ref={menuRef5}
+                    className={`birth-address-2 ${
+                      open5 ? "active" : "inactive"
+                    }`}
                   >
-                    {d.name_th}
-                  </option>
-                ))}
-              </div>
-            </Col>
+                    {amphures1.map((a) => (
+                      <option
+                        key={a.id}
+                        value={a.id}
+                        onClick={(e) => {
+                          setOpen6(!open6), setBirthDistrictID(e.target.value);
+                        }}
+                      >
+                        {a.name_th}
+                      </option>
+                    ))}
+                  </div>
+                  <div
+                    ref={menuRef6}
+                    className={`birth-address-3 ${
+                      open6 ? "active" : "inactive"
+                    }`}
+                  >
+                    {districts1.map((d) => (
+                      <option
+                        key={d.id}
+                        value={d.id}
+                        onClick={(e) => {
+                          setOpen6(!open6),
+                            setBirthSubDistrictID(e.target.value);
+                        }}
+                      >
+                        {d.name_th}
+                      </option>
+                    ))}
+                  </div>
+                </Col>
+              </>
+            ) : (
+              <>
+                <Col md={3}>
+                  <Form.Label>เชื้อชาติ</Form.Label>
+                  <Form.Control
+                    value={regEthnicity}
+                    onChange={(e) => setRegEthnicity(e.target.value)}
+                  />
+                </Col>
+                <Col md={3}>
+                  <Form.Label>สัญชาติ</Form.Label>
+                  <Form.Control
+                    value={regNationality}
+                    onChange={(e) => setRegNationality(e.target.value)}
+                  />
+                </Col>{" "}
+              </>
+            )}
           </Row>
+
           <Row className="mb-3">
-            <Col md={3}>
-              <Form.Label>เชื้อชาติ</Form.Label>
-              <Form.Control
-                value={regEthnicity}
-                onChange={(e) => setRegEthnicity(e.target.value)}
-              />
-            </Col>
-            <Col md={3}>
-              <Form.Label>สัญชาติ</Form.Label>
-              <Form.Control
-                value={regNationality}
-                onChange={(e) => setRegNationality(e.target.value)}
-              />
-            </Col>
+            {regPosition === "นักเรียน" && (
+              <>
+                <Col md={3}>
+                  <Form.Label>เชื้อชาติ</Form.Label>
+                  <Form.Control
+                    value={regEthnicity}
+                    onChange={(e) => setRegEthnicity(e.target.value)}
+                  />
+                </Col>
+                <Col md={3}>
+                  <Form.Label>สัญชาติ</Form.Label>
+                  <Form.Control
+                    value={regNationality}
+                    onChange={(e) => setRegNationality(e.target.value)}
+                  />
+                </Col>
+              </>
+            )}
             <Col md={3}>
               <Form.Label>ศาสนา</Form.Label>
               <Form.Control
@@ -1149,24 +1264,27 @@ function EditUserProfile() {
               />
             </Col>
           </Row>
-          <Row className="mb-3">
-            <Col md={3}>
-              <Form.Label>เป็นบุตรคนที่</Form.Label>
-              <Form.Control
-                value={regBirthOrder}
-                onChange={(e) => setRegBirthOrder(e.target.value)}
-                type="number"
-              />
-            </Col>
-            <Col md={3}>
-              <Form.Label>มีพี่น้อง</Form.Label>
-              <Form.Control
-                value={regSiblingsCount}
-                onChange={(e) => setRegSiblingsCount(e.target.value)}
-                type="number"
-              />
-            </Col>
-          </Row>
+
+          {regPosition === "นักเรียน" && (
+            <Row className="mb-3">
+              <Col md={3}>
+                <Form.Label>เป็นบุตรคนที่</Form.Label>
+                <Form.Control
+                  value={regBirthOrder}
+                  onChange={(e) => setRegBirthOrder(e.target.value)}
+                  type="number"
+                />
+              </Col>
+              <Col md={3}>
+                <Form.Label>มีพี่น้อง</Form.Label>
+                <Form.Control
+                  value={regSiblingsCount}
+                  onChange={(e) => setRegSiblingsCount(e.target.value)}
+                  type="number"
+                />
+              </Col>
+            </Row>
+          )}
         </section>
 
         {/* ที่อยู่ */}
@@ -1628,34 +1746,183 @@ function EditUserProfile() {
         </div>
       </Form>
 
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>กรุณาตรวจสอบข้อมูล</Modal.Title>
+      <Modal show={showModal} onHide={handleCloseModal} centered size="lg">
+        <Modal.Header
+          closeButton
+          className="modal-review-header"
+        >
+          <Modal.Title>กรุณาตรวจสอบข้อมูลก่อนบันทึก</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          <h5>ข้อมูลผู้ใช้</h5>
-          <p>
-            <strong>ชื่อ: </strong>
-            {formData1.firstName} {formData1.lastName}
-          </p>
-          <p>
-            <strong>ตำแหน่ง: </strong>
-            {formData1.position}
-          </p>
+        <Modal.Body className="modal-review-body">
+          <div className="mb-3">
+            <h5 className="mb-2">ข้อมูลผู้ใช้</h5>
+            <div className="card review-card mb-3">
+              <div className="card-body p-3">
+                <div className="row">
+                  <div className="col-md-6 d-flex gap-2">
+                    <strong>ชื่อ-สกุล:</strong>
+                    <div>
+                      {formData1.user?.firstName ?? "-"}{" "}
+                      {formData1.user?.lastName ?? "-"}
+                    </div>
+                  </div>
+                  <div className="col-md-6 d-flex gap-2">
+                    <strong>ตำแหน่ง:</strong>
+                    <div>{formData1.user?.position ?? "-"}</div>
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-6 d-flex gap-2">
+                    <strong>วันเกิด:</strong>
+                    <div>{formData1.user?.birthDate ? new Date(formData1.user.birthDate).toLocaleDateString("th-TH") : "-"}</div>
+                  </div>
+                  <div className="col-md-6 d-flex gap-2">
+                    <strong>อายุ:</strong>
+                    <div>{formData1.user?.age ?? "-"}</div>
+                  </div>
+                </div>
+
+                {/* วิชาที่สอน (ถ้ามี) */}
+                {formData1.user?.taughtSubject && (
+                  <div className="mt-3">
+                    <strong>วิชาที่สอน:</strong>
+                    <div className="mt-1">
+                      {(Array.isArray(formData1.user.taughtSubject)
+                        ? formData1.user.taughtSubject
+                        : [formData1.user.taughtSubject]
+                      ).filter(Boolean).length ? (
+                        <div className="d-flex flex-wrap gap-2 mt-1">
+                          {(Array.isArray(formData1.user.taughtSubject)
+                            ? formData1.user.taughtSubject
+                            : [formData1.user.taughtSubject]
+                          )
+                            .filter(Boolean)
+                            .map((id) => (
+                              <span key={id} className="badge bg-secondary">
+                                {id}
+                              </span>
+                            ))}
+                        </div>
+                      ) : (
+                        <em className="text-muted">-</em>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ข้อมูลบิดา/มารดา/ผู้ปกครอง สรุปแบบ card + list */}
+            <div className="row">
+              {formData1.father && (
+                <div className="col-md-12 mb-3">
+                  <div className="card review-card h-100">
+                    <div className="card-header bg-light">
+                      <strong>บิดา</strong>
+                    </div>
+                    <div className="card-body p-2">
+                      {renderKeyValueList(formData1.father)}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {formData1.mother && (
+                <div className="col-md-12 mb-3">
+                  <div className="card review-card h-100">
+                    <div className="card-header bg-light">
+                      <strong>มารดา</strong>
+                    </div>
+                    <div className="card-body p-2">
+                      {renderKeyValueList(formData1.mother)}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {formData1.parent && (
+                <div className="col-md-12 mb-3">
+                  <div className="card review-card h-100">
+                    <div className="card-header bg-light">
+                      <strong>ผู้ปกครอง</strong>
+                    </div>
+                    <div className="card-body p-2">
+                      {renderKeyValueList(formData1.parent)}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <hr />
+
+          <div className="mb-2">
+            <h5 className="mb-2">สรุปที่อยู่</h5>
+
+            <div className="row">
+              <div className="col-md-12 mb-3">
+                <div className="card review-card">
+                  <div className="card-header bg-light">
+                    <strong>ที่อยู่ผู้ใช้</strong>
+                  </div>
+                  <div className="card-body p-2">
+                    {renderKeyValueList(formData2.user)}
+                  </div>
+                </div>
+              </div>
+
+              {formData2.father && (
+                <div className="col-md-12 mb-3">
+                  <div className="card review-card">
+                    <div className="card-header bg-light">
+                      <strong>ที่อยู่บิดา</strong>
+                    </div>
+                    <div className="card-body p-2">
+                      {renderKeyValueList(formData2.father)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {formData2.mother && (
+                <div className="col-md-12 mb-3">
+                  <div className="card review-card">
+                    <div className="card-header bg-light">
+                      <strong>ที่อยู่มารดา</strong>
+                    </div>
+                    <div className="card-body p-2">
+                      {renderKeyValueList(formData2.mother)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {formData2.parent && (
+                <div className="col-md-12 mb-3">
+                  <div className="card review-card">
+                    <div className="card-header bg-light">
+                      <strong>ที่อยู่ผู้ปกครอง</strong>
+                    </div>
+                    <div className="card-body p-2">
+                      {renderKeyValueList(formData2.parent)}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
+        <Modal.Footer className="border-0">
+          <Button className="delete-butt" onClick={handleCloseModal}>
             ยกเลิก
           </Button>
-          <Button variant="primary" onClick={handleConfirmSave}>
-            ตกลง
+          <Button className="edit-butt" onClick={handleConfirmSave}>
+            ตกลงและบันทึก
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <div className="footer">
-        <div className="custom-h3">ติดต่อเรา</div>
-      </div>
+      <Footer />
     </div>
   );
 }

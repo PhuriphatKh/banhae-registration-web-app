@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
-import { useUserAuth } from "../context/UserAuthContext";
-import { useStudentTable } from "../context/StudentTableContex";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Form } from "react-bootstrap";
 import { db } from "../firebase";
 import {
@@ -14,93 +11,100 @@ import {
 } from "firebase/firestore";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { useStudentTable } from "../context/StudentTableContex";
+
+// --- Static configs (ย้ายออกนอก component เพื่อลด re-create) ---
+const CLASS_TABLE_IDS = {
+  "ประถมศึกษาปีที่ 1": "j8AzXNhqKwCBoInfAt1f",
+  "ประถมศึกษาปีที่ 2": "jehvrtW8WQnbgQUFpQ3A",
+  "ประถมศึกษาปีที่ 3": "N0UMUb6jNC3f0bMjgEyZ",
+  "ประถมศึกษาปีที่ 4": "kpSW5PxJ5xgxg3EEI7om",
+  "ประถมศึกษาปีที่ 5": "Vr4gnaex3VvDpYpkSerq",
+  "ประถมศึกษาปีที่ 6": "idKJQ8WN6fLccjCX5RCK",
+};
+
+const SEMESTERS = [1, 2];
+
+const CLASS_TABLE = [
+  "ประถมศึกษาปีที่ 1",
+  "ประถมศึกษาปีที่ 2",
+  "ประถมศึกษาปีที่ 3",
+  "ประถมศึกษาปีที่ 4",
+  "ประถมศึกษาปีที่ 5",
+  "ประถมศึกษาปีที่ 6",
+];
+
+// คีย์ชื่อคาบเรียนทั้งหมด เพื่อช่วย loop set/get
+const PERIOD_KEYS = [
+  "mon0830",
+  "mon0930",
+  "mon1030",
+  "mon1230",
+  "mon1330",
+  "mon1430",
+  "tue0830",
+  "tue0930",
+  "tue1030",
+  "tue1230",
+  "tue1330",
+  "tue1430",
+  "wed0830",
+  "wed0930",
+  "wed1030",
+  "wed1230",
+  "wed1330",
+  "wed1430",
+  "thu0830",
+  "thu0930",
+  "thu1030",
+  "thu1230",
+  "thu1330",
+  "thu1430",
+  "fri0830",
+  "fri0930",
+  "fri1030",
+  "fri1230",
+  "fri1330",
+  "fri1430",
+];
 
 function StudentTableManagement() {
   const { studentTableData } = useStudentTable();
-  const navigate = useNavigate();
+  const [academicYears, setAcademicYears] = useState([]);
 
-  const classTableIDs = {
-    "ประถมศึกษาปีที่ 1": "j8AzXNhqKwCBoInfAt1f",
-    "ประถมศึกษาปีที่ 2": "jehvrtW8WQnbgQUFpQ3A",
-    "ประถมศึกษาปีที่ 3": "N0UMUb6jNC3f0bMjgEyZ",
-    "ประถมศึกษาปีที่ 4": "kpSW5PxJ5xgxg3EEI7om",
-    "ประถมศึกษาปีที่ 5": "Vr4gnaex3VvDpYpkSerq",
-    "ประถมศึกษาปีที่ 6": "idKJQ8WN6fLccjCX5RCK",
-  };
-
-  const classTable = [
-    "ประถมศึกษาปีที่ 1",
-    "ประถมศึกษาปีที่ 2",
-    "ประถมศึกษาปีที่ 3",
-    "ประถมศึกษาปีที่ 4",
-    "ประถมศึกษาปีที่ 5",
-    "ประถมศึกษาปีที่ 6",
-  ];
-
-  const academicYear = [2567, 2568];
-  const semester = [1, 2];
-
-  const [regAcademicYear, setRegAcademicYear] = useState(2567);
-  const [regSemester, setRegSemester] = useState(1);
-
-  const [subjects, setSubjects] = useState([]);
-
-  // uid ครู -> ชื่อที่ใช้แสดง
-  const [teachersMap, setTeachersMap] = useState({});
-
-  // ช่วยให้ค้นหา subject จาก id ได้ O(1)
-  const subjectById = React.useMemo(
-    () => new Map(subjects.map((s) => [s.id, s])),
-    [subjects]
-  );
-
-  // โหลดชื่อครูจาก Firestore
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "profile"), (snap) => {
-      const map = {};
-      snap.forEach((doc) => {
-        const d = doc.data();
-        const first = d?.user?.firstName ?? d?.firstName ?? "";
-        const display = first || last ? `${first}`.trim() : "(ไม่มีชื่อ)";
-        map[doc.id] = display;
-      });
-      setTeachersMap(map);
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, "school_record"),
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setAcademicYears(data);
+        console.log("Year data updated:", data);
+      }
+    );
+
     return () => unsubscribe();
   }, []);
 
-  // ฟังก์ชันช่วยแปลง uid ของครูเป็นชื่อที่แสดง
-  // ใช้ใน getSubjectDisplay เพื่อแสดงชื่อครูในตาราง
-  // ถ้า uid ไม่พบใน teachersMap จะใช้ uid แทน
-  const getTeacherNames = (uids = []) =>
-    uids.map((uid) => teachersMap[uid] || uid).join(", ");
+  // === States พื้นฐาน ===
+  const [regAcademicYear, setRegAcademicYear] = useState(2567);
+  const [regSemester, setRegSemester] = useState(1);
+  const [regClassLevel, setRegClassLevel] = useState("ประถมศึกษาปีที่ 1");
+  const [subjects, setSubjects] = useState([]);
+  const [teachersMap, setTeachersMap] = useState({});
+  const [regTimeTable, setRegTimeTable] = useState([
+    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
+    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
+    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
+    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
+    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
+    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
+  ]);
+  const [error, setError] = useState("");
 
-  const formatSubjectName = (name) => {
-    if (!name) return "";
-    return name.split(" ").map((word, idx) => <div key={idx}>{word}</div>);
-  };
-
-  const getSubjectDisplay = (subjectId) => {
-    if (!subjectId || subjectId === "-") return "-";
-    const subject = subjects.find((s) => s.id === subjectId);
-    if (!subject) return subjectId;
-
-    return (
-      <>
-        <div style={{ fontSize: "0.6vw" }}>{subject.id}</div>
-        <div
-          className="d-flex flex-column align-items-center"
-          style={{ fontSize: "0.6vw" }}
-        >
-          {formatSubjectName(subject.name)}
-        </div>
-        <div style={{ fontSize: "0.6vw" }}>
-          {getTeacherNames(subject.teachers || [])}
-        </div>
-      </>
-    );
-  };
-
+  // === States ของรายคาบ (คงชื่อ state เดิมไว้เพื่อไม่ไปเปลี่ยนส่วน render) ===
   const [regMon0830, setRegMon0830] = useState("-");
   const [regMon0930, setRegMon0930] = useState("-");
   const [regMon1030, setRegMon1030] = useState("-");
@@ -136,121 +140,144 @@ function StudentTableManagement() {
   const [regFri1330, setRegFri1330] = useState("-");
   const [regFri1430, setRegFri1430] = useState("-");
 
-  const [regClassLevel, setRegClassLevel] = useState("ประถมศึกษาปีที่ 1");
-
-  const [regTimeTable, setRegTimeTable] = useState([
-    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
-    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
-    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
-    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
-    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
-    { startHour: "", startMinute: "", endHour: "", endMinute: "" },
-  ]);
-
-  const [error, setError] = useState("");
-
-  const tableID = classTableIDs[regClassLevel] || "";
-
-  // โหลดข้อมูลตารางเรียน
-  const table = studentTableData.find(
-    (item) => item.id === tableID + regAcademicYear + "_" + regSemester
+  // --- Helpers: สร้าง map ของ setter เพื่อ loop อัปเดตได้ทีเดียว ---
+  const setters = useMemo(
+    () => ({
+      mon0830: setRegMon0830,
+      mon0930: setRegMon0930,
+      mon1030: setRegMon1030,
+      mon1230: setRegMon1230,
+      mon1330: setRegMon1330,
+      mon1430: setRegMon1430,
+      tue0830: setRegTue0830,
+      tue0930: setRegTue0930,
+      tue1030: setRegTue1030,
+      tue1230: setRegTue1230,
+      tue1330: setRegTue1330,
+      tue1430: setRegTue1430,
+      wed0830: setRegWed0830,
+      wed0930: setRegWed0930,
+      wed1030: setRegWed1030,
+      wed1230: setRegWed1230,
+      wed1330: setRegWed1330,
+      wed1430: setRegWed1430,
+      thu0830: setRegThu0830,
+      thu0930: setRegThu0930,
+      thu1030: setRegThu1030,
+      thu1230: setRegThu1230,
+      thu1330: setRegThu1330,
+      thu1430: setRegThu1430,
+      fri0830: setRegFri0830,
+      fri0930: setRegFri0930,
+      fri1030: setRegFri1030,
+      fri1230: setRegFri1230,
+      fri1330: setRegFri1330,
+      fri1430: setRegFri1430,
+    }),
+    []
   );
 
-  // set ข้อมูลตารางเรียน
+  const tableID = useMemo(
+    () => CLASS_TABLE_IDS[regClassLevel] || "",
+    [regClassLevel]
+  );
+
+  // ดึงข้อมูลตารางเรียนของชั้น/ปี/เทอมปัจจุบัน
+  const table = useMemo(
+    () =>
+      studentTableData.find(
+        (item) => item.id === tableID + regAcademicYear + "_" + regSemester
+      ),
+    [studentTableData, tableID, regAcademicYear, regSemester]
+  );
+
+  // โหลดชื่อครูจาก Firestore (แก้บั๊กตัวแปร last ไม่ได้ประกาศ)
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "profile"), (snap) => {
+      const map = {};
+      snap.forEach((docSnap) => {
+        const d = docSnap.data();
+        const first = d?.user?.firstName ?? d?.firstName ?? "";
+        const last = d?.user?.lastName ?? d?.lastName ?? "";
+        const display =
+          first || last ? `${first} ${last}`.trim() : "(ไม่มีชื่อ)";
+        map[docSnap.id] = display;
+      });
+      setTeachersMap(map);
+      console.log("Teachers updated:", map);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const getTeacherName = useCallback(
+    (uid) => (!uid ? "-" : teachersMap?.[uid] || String(uid)),
+    [teachersMap]
+  );
+
+  const formatSubjectName = useCallback((name) => {
+    if (!name) return "";
+    return name.split(" ").map((word, idx) => <div key={idx}>{word}</div>);
+  }, []);
+
+  const subjectOptions = useMemo(
+    () =>
+      subjects.map((subject) => (
+        <option key={subject.id} value={subject.id}>
+          {subject.id} {subject.name}
+        </option>
+      )),
+    [subjects]
+  );
+
+  const getSubjectDisplay = useCallback(
+    (subjectId) => {
+      if (!subjectId || subjectId === "-") return "-";
+      const subject = subjects.find((s) => s.id === subjectId);
+      if (!subject) return subjectId;
+      return (
+        <>
+          <div style={{ fontSize: "0.6vw" }}>{subject.id}</div>
+          <div
+            className="d-flex flex-column align-items-center"
+            style={{ fontSize: "0.6vw" }}
+          >
+            {formatSubjectName(subject.name)}
+          </div>
+          <div style={{ fontSize: "0.6vw" }}>
+            {getTeacherName(subject.teacherId || "-")}
+          </div>
+        </>
+      );
+    },
+    [subjects, formatSubjectName, getTeacherName]
+  );
+
+  // Helper: เซตค่า state รายคาบทั้งหมดจาก table (หรือรีเซ็ตเป็น '-')
+  const applyTableToStates = useCallback(
+    (t) => {
+      PERIOD_KEYS.forEach((k) => {
+        const setter = setters[k];
+        if (setter) setter(t ? t[k] ?? "-" : "-");
+      });
+    },
+    [setters]
+  );
+
+  // เมื่อ table เปลี่ยน ให้เติมค่า หรือรีเซ็ต
   useEffect(() => {
     if (table) {
-      setRegMon0830(table.mon0830);
-      setRegMon0930(table.mon0930);
-      setRegMon1030(table.mon1030);
-      setRegMon1230(table.mon1230);
-      setRegMon1330(table.mon1330);
-      setRegMon1430(table.mon1430);
-
-      setRegTue0830(table.tue0830);
-      setRegTue0930(table.tue0930);
-      setRegTue1030(table.tue1030);
-      setRegTue1230(table.tue1230);
-      setRegTue1330(table.tue1330);
-      setRegTue1430(table.tue1430);
-
-      setRegWed0830(table.wed0830);
-      setRegWed0930(table.wed0930);
-      setRegWed1030(table.wed1030);
-      setRegWed1230(table.wed1230);
-      setRegWed1330(table.wed1330);
-      setRegWed1430(table.wed1430);
-
-      setRegThu0830(table.thu0830);
-      setRegThu0930(table.thu0930);
-      setRegThu1030(table.thu1030);
-      setRegThu1230(table.thu1230);
-      setRegThu1330(table.thu1330);
-      setRegThu1430(table.thu1430);
-
-      setRegFri0830(table.fri0830);
-      setRegFri0930(table.fri0930);
-      setRegFri1030(table.fri1030);
-      setRegFri1230(table.fri1230);
-      setRegFri1330(table.fri1330);
-      setRegFri1430(table.fri1430);
-
+      applyTableToStates(table);
       console.log("📋 TeacherTable:", table);
     } else {
-      const setAll = (setter) => setter("-");
-
-      [
-        setRegMon0830,
-        setRegMon0930,
-        setRegMon1030,
-        setRegMon1230,
-        setRegMon1330,
-        setRegMon1430,
-        setRegTue0830,
-        setRegTue0930,
-        setRegTue1030,
-        setRegTue1230,
-        setRegTue1330,
-        setRegTue1430,
-        setRegWed0830,
-        setRegWed0930,
-        setRegWed1030,
-        setRegWed1230,
-        setRegWed1330,
-        setRegWed1430,
-        setRegThu0830,
-        setRegThu0930,
-        setRegThu1030,
-        setRegThu1230,
-        setRegThu1330,
-        setRegThu1430,
-        setRegFri0830,
-        setRegFri0930,
-        setRegFri1030,
-        setRegFri1230,
-        setRegFri1330,
-        setRegFri1430,
-      ].forEach(setAll);
-
+      applyTableToStates(undefined);
       console.log("⚠️ ไม่พบตารางเวลา → เซตเป็น '-'");
     }
-  }, [table, regClassLevel, regAcademicYear, regSemester]);
+  }, [table, applyTableToStates]);
 
-  // logout
-  const handleLogout = async () => {
-    try {
-      await logOut();
-      navigate("/");
-    } catch (err) {
-      console.log(err.message);
-    }
-  };
-
-  //save
+  // บันทึกข้อมูล (สร้าง payload ด้วย loop แทนการพิมพ์ซ้ำ)
   const handleSave = async (e) => {
     e.preventDefault();
     setError("");
-
-    const tableID = classTableIDs[regClassLevel] || "";
 
     if (!tableID) {
       setError("กรุณาเลือกระดับชั้นเรียนให้ถูกต้อง");
@@ -258,10 +285,8 @@ function StudentTableManagement() {
     }
 
     try {
-      const studentTable = {
-        classLevel: regClassLevel,
-        academicYear: regAcademicYear,
-        semester: regSemester,
+      // รวมค่าจาก state รายคาบทั้งหมด
+      const regValues = {
         mon0830: regMon0830,
         mon0930: regMon0930,
         mon1030: regMon1030,
@@ -294,18 +319,24 @@ function StudentTableManagement() {
         fri1430: regFri1430,
       };
 
+      const studentTable = {
+        classLevel: regClassLevel,
+        academicYear: regAcademicYear,
+        semester: regSemester,
+        ...regValues,
+      };
+
       await setDoc(
         doc(db, "student_table", tableID + regAcademicYear + "_" + regSemester),
         studentTable
       );
-
       console.log("Data saved to FireStore!");
     } catch (error) {
       console.log(error);
     }
   };
 
-  // โหลดตารางเวลาเรียน
+  // โหลดตารางเวลาเรียน (ช่วงเวลา) จาก time_table
   useEffect(() => {
     const unsubscribe = onSnapshot(
       doc(db, "time_table", "GnIYgvi6eieBMulTF8eK"),
@@ -328,7 +359,7 @@ function StudentTableManagement() {
     return () => unsubscribe();
   }, []);
 
-  // โหลดวิชาจาก Firestore
+  // โหลดรายวิชาตามชั้นเรียน
   useEffect(() => {
     const q = query(
       collection(db, "subjects"),
@@ -336,18 +367,17 @@ function StudentTableManagement() {
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const newData = [];
-      snapshot.forEach((doc) => {
-        newData.push({ id: doc.id, ...doc.data() });
-      });
+      snapshot.forEach((docSnap) =>
+        newData.push({ id: docSnap.id, ...docSnap.data() })
+      );
       setSubjects(newData);
       console.log("Subjects updated:", newData);
     });
-
     return () => unsubscribe();
   }, [regClassLevel]);
 
   return (
-    <div style={{ backgroundColor: "#BBBBBB" }}>
+    <div style={{ backgroundColor: "#BBBBBB", minWidth: "fit-content" }}>
       <Navbar />
 
       <div className="p-3 page-detail">
@@ -375,7 +405,7 @@ function StudentTableManagement() {
                         <option value="" disabled>
                           -- เลือกชั้นเรียน --
                         </option>
-                        {classTable.map((classItem) => (
+                        {CLASS_TABLE.map((classItem) => (
                           <option key={classItem} value={classItem}>
                             {classItem}
                           </option>
@@ -394,9 +424,9 @@ function StudentTableManagement() {
                         <option value="" disabled>
                           -- ปีการศึกษา --
                         </option>
-                        {academicYear.map((year) => (
-                          <option key={year} value={year}>
-                            ปีการศึกษา {year}
+                        {academicYears.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            ปีการศึกษา {item.id}
                           </option>
                         ))}
                       </Form.Select>
@@ -411,7 +441,7 @@ function StudentTableManagement() {
                         <option value="" disabled>
                           -- ภาคเรียนที่ --
                         </option>
-                        {semester.map((sem) => (
+                        {SEMESTERS.map((sem) => (
                           <option key={sem} value={sem}>
                             ภาคเรียนที่ {sem}
                           </option>
@@ -687,86 +717,62 @@ function StudentTableManagement() {
                       >
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regMon0830}
                             onChange={(e) => setRegMon0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regMon0930}
                             onChange={(e) => setRegMon0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regMon1030}
                             onChange={(e) => setRegMon1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regMon1230}
                             onChange={(e) => setRegMon1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regMon1330}
                             onChange={(e) => setRegMon1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regMon1430}
                             onChange={(e) => setRegMon1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                       </div>
@@ -779,86 +785,62 @@ function StudentTableManagement() {
                       >
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regTue0830}
                             onChange={(e) => setRegTue0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regTue0930}
                             onChange={(e) => setRegTue0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regTue1030}
                             onChange={(e) => setRegTue1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regTue1230}
                             onChange={(e) => setRegTue1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regTue1330}
                             onChange={(e) => setRegTue1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regTue1430}
                             onChange={(e) => setRegTue1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                       </div>
@@ -871,86 +853,62 @@ function StudentTableManagement() {
                       >
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regWed0830}
                             onChange={(e) => setRegWed0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regWed0930}
                             onChange={(e) => setRegWed0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regWed1030}
                             onChange={(e) => setRegWed1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regWed1230}
                             onChange={(e) => setRegWed1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regWed1330}
                             onChange={(e) => setRegWed1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regWed1430}
                             onChange={(e) => setRegWed1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                       </div>
@@ -963,86 +921,62 @@ function StudentTableManagement() {
                       >
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regThu0830}
                             onChange={(e) => setRegThu0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regThu0930}
                             onChange={(e) => setRegThu0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regThu1030}
                             onChange={(e) => setRegThu1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regThu1230}
                             onChange={(e) => setRegThu1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regThu1330}
                             onChange={(e) => setRegThu1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regThu1430}
                             onChange={(e) => setRegThu1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                       </div>
@@ -1055,86 +989,62 @@ function StudentTableManagement() {
                       >
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regFri0830}
                             onChange={(e) => setRegFri0830(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regFri0930}
                             onChange={(e) => setRegFri0930(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regFri1030}
                             onChange={(e) => setRegFri1030(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regFri1230}
                             onChange={(e) => setRegFri1230(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill border-bottom border-black d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regFri1330}
                             onChange={(e) => setRegFri1330(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                         <div className="custom-h6 flex-fill d-flex justify-content-center align-items-center">
                           <select
-                            className="text-center"
+                            className="text-start"
                             value={regFri1430}
                             onChange={(e) => setRegFri1430(e.target.value)}
                           >
                             <option value="-">-</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.id} value={subject.id}>
-                                {subject.name}
-                              </option>
-                            ))}
+                            {subjectOptions}
                           </select>
                         </div>
                       </div>

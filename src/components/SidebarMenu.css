@@ -1,0 +1,128 @@
+/* === Sidebar base === */
+.sidebar {
+  width: 100% !important;
+  padding: 8px;
+}
+
+/* === Menu item button: gradient + elevation + micro-interaction === */
+.sidebar-menu-item button {
+  width: 100%;
+  background: linear-gradient(180deg, #a8e063 0%, #61c554 100%);
+  border: 1px solid #47a042;
+  border-radius: 12px;
+  text-align: left;
+  padding: 12px 14px;
+  cursor: pointer;
+
+  /* Depth */
+  box-shadow: 0 8px 18px rgba(97, 197, 84, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.25) inset;
+
+  /* Smooth interactions */
+  transition: transform 180ms ease, box-shadow 180ms ease, background 200ms ease,
+    border-color 200ms ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-menu-item button:hover {
+  background: linear-gradient(180deg, #b6ea7a 0%, #6ed35f 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(97, 197, 84, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.3) inset;
+}
+
+.sidebar-menu-item button:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 12px rgba(97, 197, 84, 0.3),
+    0 0 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.sidebar-menu-item button:focus-visible {
+  outline: 3px solid rgba(26, 188, 156, 0.35);
+  outline-offset: 2px;
+  border-color: #1abc9c;
+}
+
+/* caret บอกสถานะเปิด/ปิด */
+.sidebar-menu-item .chev {
+  margin-left: auto;
+  line-height: 1;
+}
+.sidebar-menu-item .chev::before {
+  content: "▾";
+  display: inline-block;
+  transform: rotate(-90deg);
+  transition: transform 200ms ease;
+  opacity: 0.9;
+}
+.sidebar-menu-item .chev.open::before {
+  transform: rotate(0deg);
+}
+
+/* === Dropdown: card-like + slide-down animation === */
+/* ใช้เทคนิค max-height/opacity/transform เพื่อให้แอนิเมชันทำงานได้ (แทน display:none) */
+.sidebar-dropdown {
+  border-radius: 12px;
+  background: linear-gradient(180deg, #e9f8d7 0%, #d7f0bd 100%);
+  border: 1px solid #78d27a;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  padding: 0 12px;
+  margin-top: 8px;
+
+  /* ซ่อนเริ่มต้นด้วย height/opacity/visibility */
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+
+  /* Elevation */
+  box-shadow: 0 10px 22px rgba(97, 197, 84, 0.15),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+
+  transition: max-height 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 200ms ease, transform 200ms ease, visibility 0ms linear 200ms,
+    /* หน่วงให้ visibility เปลี่ยนหลังจบ opacity */ padding 200ms ease;
+}
+
+.sidebar-dropdown.show {
+  max-height: 480px; /* พอสำหรับลิงก์หลายบรรทัด */
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  padding: 10px 12px; /* เติม top/bottom เมื่อเปิด */
+  margin-bottom: 8px;
+  transition: max-height 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 220ms ease, transform 220ms ease, visibility 0ms, padding 220ms ease;
+}
+
+.sidebar-dropdown a {
+  text-decoration: none;
+  padding: 8px 4px;
+  margin-left: 6px;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+  color: #0f4c2c;
+}
+
+.sidebar-dropdown a:hover {
+  color: #0d7a61;
+  background: rgba(255, 255, 255, 0.6);
+  border-color: #1abc9c;
+}
+
+/* ซ่อน sidebar บน desktop เหมือนเดิม */
+@media (min-width: 1024px) {
+  .sidebar {
+    display: none;
+  }
+}

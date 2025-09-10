@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useUserAuth } from "../context/UserAuthContext";
 import { useStudentTable } from "../context/StudentTableContex";
 import { useUserProfile } from "../context/ProfileDataContex";
+import { db } from "../firebase";
+import { onSnapshot, collection, doc, query, where } from "firebase/firestore";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
@@ -12,8 +14,9 @@ function StudentTable() {
 
   const [regAcademicYear, setRegAcademicYear] = useState(2567);
   const [regSemester, setRegSemester] = useState(1);
-
-  const [studentClassLevel, setStudentClassLevel] = useState("ประถมศึกษาปีที่ 1");
+  const [classLevel, setClassLevel] = useState("");
+  const [subjects, setSubjects] = useState([]);
+  const [teachersMap, setTeachersMap] = useState({});
 
   const classTableIDs = {
     "ประถมศึกษาปีที่ 1": "j8AzXNhqKwCBoInfAt1f",
@@ -74,15 +77,14 @@ function StudentTable() {
     const studentProfile = profileData.find((item) => item.id === user.uid);
 
     if (studentProfile) {
-      setStudentClassLevel(studentProfile.user.classLevel);
+      setClassLevel(studentProfile.user.classLevel);
     }
-
   }, [profileData]);
 
   useEffect(() => {
     if (!studentTableData) return;
 
-    const tableID = classTableIDs[studentClassLevel] || "";
+    const tableID = classTableIDs[classLevel] || "";
 
     const table = studentTableData.find(
       (item) => item.id === tableID + regAcademicYear + "_" + regSemester
@@ -163,10 +165,85 @@ function StudentTable() {
 
       console.log("⚠️ ไม่พบตารางเวลา → เซตเป็น '-'");
     }
-  }, [studentClassLevel, studentTableData, regAcademicYear, regSemester]);
+  }, [classLevel, studentTableData, regAcademicYear, regSemester]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "profile"), (snap) => {
+      const map = {};
+      snap.forEach((doc) => {
+        const d = doc.data();
+        const first = d?.user?.firstName ?? d?.firstName ?? "";
+        const display = first || last ? `${first}`.trim() : "(ไม่มีชื่อ)";
+        map[doc.id] = display;
+      });
+      setTeachersMap(map);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const getTeacherNames = (uid) => {
+    if (!uid) return "-";
+    return teachersMap?.[uid] || String(uid);
+  };
+
+  const formatSubjectName = (name) => {
+    if (!name) return "";
+    return name.split(" ").map((word, idx) => <div key={idx}>{word}</div>);
+  };
+
+  const getSubjectDisplay = (subjectId) => {
+    if (!subjectId || subjectId === "-") return "-";
+    const subject = subjects.find((s) => s.id === subjectId);
+    if (!subject) return subjectId;
+
+    return (
+      <>
+        <div style={{ fontSize: "1rem" }}>{subject.id}</div>
+        <div
+          className="d-flex flex-column align-items-center"
+          style={{ fontSize: "0.8rem" }}
+        >
+          {formatSubjectName(subject.name)}
+        </div>
+        <div style={{ fontSize: "0.7rem" }}>
+          {getTeacherNames(subject.teacherId || [])}
+        </div>
+      </>
+    );
+  };
+
+  useEffect(() => {
+    if (!user.uid) return;
+
+    const unsubscribe = onSnapshot(doc(db, "profile", user.uid), (snapshot) => {
+      const newData = snapshot.data();
+      if (!newData) return;
+      setClassLevel(newData.user.classLevel || "");
+    });
+
+    return () => unsubscribe();
+  }, [user.uid]);
+
+  useEffect(() => {
+    if (!classLevel) return;
+
+    const q = query(
+      collection(db, "subjects"),
+      where("classLevel", "==", classLevel)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const newData = [];
+      snapshot.forEach((doc) => {
+        newData.push({ id: doc.id, ...doc.data() });
+      });
+      setSubjects(newData);
+      console.log("Subjects updated:", newData);
+    });
+    return unsubscribe;
+  }, [classLevel]);
 
   return (
-    <div>
+    <div style={{ minWidth: "fit-content" }}>
       <Navbar />
 
       <div className="p-3 page-detail">
@@ -235,31 +312,31 @@ function StudentTable() {
                 {
                   time: "08:30 - 09:30",
                   data: [
-                    regMon0830,
-                    regTue0830,
-                    regWed0830,
-                    regThu0830,
-                    regFri0830,
+                    getSubjectDisplay(regMon0830),
+                    getSubjectDisplay(regTue0830),
+                    getSubjectDisplay(regWed0830),
+                    getSubjectDisplay(regThu0830),
+                    getSubjectDisplay(regFri0830),
                   ],
                 },
                 {
                   time: "09:30 - 10:30",
                   data: [
-                    regMon0930,
-                    regTue0930,
-                    regWed0930,
-                    regThu0930,
-                    regFri0930,
+                    getSubjectDisplay(regMon0930),
+                    getSubjectDisplay(regTue0930),
+                    getSubjectDisplay(regWed0930),
+                    getSubjectDisplay(regThu0930),
+                    getSubjectDisplay(regFri0930),
                   ],
                 },
                 {
                   time: "10:30 - 11:30",
                   data: [
-                    regMon1030,
-                    regTue1030,
-                    regWed1030,
-                    regThu1030,
-                    regFri1030,
+                    getSubjectDisplay(regMon1030),
+                    getSubjectDisplay(regTue1030),
+                    getSubjectDisplay(regWed1030),
+                    getSubjectDisplay(regThu1030),
+                    getSubjectDisplay(regFri1030),
                   ],
                 },
               ].map((col, i) => (
@@ -313,31 +390,31 @@ function StudentTable() {
                 {
                   time: "12:30 - 13:30",
                   data: [
-                    regMon1230,
-                    regTue1230,
-                    regWed1230,
-                    regThu1230,
-                    regFri1230,
+                    getSubjectDisplay(regMon1230),
+                    getSubjectDisplay(regTue1230),
+                    getSubjectDisplay(regWed1230),
+                    getSubjectDisplay(regThu1230),
+                    getSubjectDisplay(regFri1230),
                   ],
                 },
                 {
                   time: "13:30 - 14:30",
                   data: [
-                    regMon1330,
-                    regTue1330,
-                    regWed1330,
-                    regThu1330,
-                    regFri1330,
+                    getSubjectDisplay(regMon1330),
+                    getSubjectDisplay(regTue1330),
+                    getSubjectDisplay(regWed1330),
+                    getSubjectDisplay(regThu1330),
+                    getSubjectDisplay(regFri1330),
                   ],
                 },
                 {
                   time: "14:30 - 15:30",
                   data: [
-                    regMon1430,
-                    regTue1430,
-                    regWed1430,
-                    regThu1430,
-                    regFri1430,
+                    getSubjectDisplay(regMon1430),
+                    getSubjectDisplay(regTue1430),
+                    getSubjectDisplay(regWed1430),
+                    getSubjectDisplay(regThu1430),
+                    getSubjectDisplay(regFri1430),
                   ],
                 },
                 { time: "", data: ["", "", "", "", ""] },

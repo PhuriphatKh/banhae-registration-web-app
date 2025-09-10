@@ -42,3 +42,44 @@
 .subject-scores-table tbody tr:last-child td:last-child {
   border-bottom-right-radius: 20px;
 }
+
+.floating-alert {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: #d1e7dd; /* bootstrap success bg */
+  color: #0f5132; /* bootstrap success text */
+  padding: 0.65rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  z-index: 1080;
+  font-weight: 600;
+  animation: slideDown 280ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+/* optional fade-out when removed (works with existing setTimeout hide) */
+.floating-alert.hide {
+  animation: slideUp 240ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-18px);
+  }
+}

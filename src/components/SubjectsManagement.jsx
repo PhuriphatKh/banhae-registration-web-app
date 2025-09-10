@@ -272,14 +272,7 @@ function SubjectsManagement() {
                                 </td>
                                 <td>
                                   <div className="d-flex justify-content-center align-items-center w-100 h-100 py-2">
-                                    {Array.isArray(subject.teachers) &&
-                                    subject.teachers.length > 0
-                                      ? subject.teachers
-                                          .map((teacherId) =>
-                                            getTeacherName(teacherId)
-                                          )
-                                          .join(", ")
-                                      : "-"}
+                                    {getTeacherName(subject.teacherId)}
                                   </div>
                                 </td>
                                 <td>

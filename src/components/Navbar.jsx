@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router";
 import { useUserAuth } from "../context/UserAuthContext";
+import SidebarMenu from "./SideBarMenu";
 import logo from "../assets/logo.png";
 
 function DropdownMenu({ label, links, open, setOpen, menuRef }) {
@@ -18,11 +19,17 @@ function DropdownMenu({ label, links, open, setOpen, menuRef }) {
         </svg>
       </div>
       <div className={`dropdown-content ${open ? "active" : "inactive"}`}>
-        {links.map(({ label, path }, index) => (
-          <Link to={path} key={index}>
-            {label}
-          </Link>
-        ))}
+        {links.map(({ label, path, disabled }, index) =>
+          disabled ? (
+            <span key={index} className="disabled-link">
+              {label}
+            </span>
+          ) : (
+            <Link to={path} key={index}>
+              {label}
+            </Link>
+          )
+        )}
       </div>
     </div>
   );
@@ -33,8 +40,14 @@ function Navbar() {
     open1: false,
     open2: false,
     open3: false,
+    open4: false,
   });
-  const menuRefs = { menu1: useRef(), menu2: useRef(), menu3: useRef() };
+  const menuRefs = {
+    menu1: useRef(),
+    menu2: useRef(),
+    menu3: useRef(),
+    menu4: useRef(),
+  };
   const { logOut, user, userRole, firstName, lastName } = useUserAuth();
   const navigate = useNavigate();
 
@@ -57,6 +70,12 @@ function Navbar() {
         !menuRefs.menu3.current.contains(e.target)
       ) {
         setDropdowns((prev) => ({ ...prev, open3: false }));
+      }
+      if (
+        menuRefs.menu4.current &&
+        !menuRefs.menu4.current.contains(e.target)
+      ) {
+        setDropdowns((prev) => ({ ...prev, open4: false }));
       }
     };
     document.addEventListener("mousedown", handler);
@@ -89,7 +108,7 @@ function Navbar() {
         <DropdownMenu
           label="ทะเบียน"
           links={
-            userRole === "admin"
+            userRole === "แอดมิน"
               ? [
                   { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
                   { label: "จัดการข้อมูลผู้ใช้", path: "/usermanagement" },
@@ -136,19 +155,13 @@ function Navbar() {
           setOpen={(open) => setDropdowns({ ...dropdowns, open3: open })}
           menuRef={menuRefs.menu3}
         />
-        <div className="dropdown">
-          <div className="dropdown-trigger">
-            <div className="custom-h5">คำร้อง</div>
-            <svg
-              className="dropdown-icon"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-            >
-              <path d="M7 10l5 5 5-5H7z" />
-            </svg>
-          </div>
-        </div>
+        <DropdownMenu
+          label="คำร้อง"
+          links={[{ label: "ยังไม่เปิดการใช้งาน", path: "#", disabled: true }]}
+          open={dropdowns.open4}
+          setOpen={(open) => setDropdowns({ ...dropdowns, open4: open })}
+          menuRef={menuRefs.menu4}
+        />
       </div>
 
       {/* Profile Dropdown */}
@@ -175,6 +188,7 @@ function Navbar() {
           <div className="custom-h4">
             {firstName} {lastName}
           </div>
+          <SidebarMenu />
           <button
             className="logout-button"
             type="button"

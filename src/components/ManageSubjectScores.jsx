@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form } from "react-bootstrap";
+import { Form, Alert } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router";
 import { useUserProfile } from "../context/ProfileDataContex";
 import GradingCriteriaSetting from "./GradingCriteriaSetting";
@@ -13,7 +13,10 @@ import {
   doc,
   updateDoc,
   setDoc,
+  addDoc,
+  serverTimestamp,
 } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // ---------- Utilities ----------
 const pickGradeFromCriteria = (total, g) => {
@@ -42,7 +45,7 @@ const ScoreInput = ({ value, onChange, readOnly }) => (
   />
 );
 
-function GradeManagement() {
+function ManageSubjectScores() {
   const [students, setStudents] = useState([]);
   const [subjectID, setSubjectID] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -59,6 +62,8 @@ function GradeManagement() {
     grade1_0: 50,
   });
   const [open, setOpen] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [hidingAlert, setHidingAlert] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -205,7 +210,6 @@ function GradeManagement() {
         subjectID
       );
       const payload = { scoring_criteria: scoringCriteria };
-
       const allIds = Object.keys(studentScores);
       for (const sid of allIds) {
         const scoreObj = studentScores[sid] || {};
@@ -213,9 +217,35 @@ function GradeManagement() {
           ...scoreObj,
         };
       }
-
       await updateDoc(ref, payload);
       console.log("All scores saved successfully.");
+      setSaveSuccess(true);
+      // create approval request
+      try {
+        const auth = getAuth();
+        const requesterUid = auth.currentUser?.uid ?? null;
+        const requesterName = auth.currentUser?.displayName ?? null;
+        await addDoc(collection(db, "approval_requests"), {
+          type: "score_update",
+          school_record_path: `school_record/2567/${subjectData.classLevel}/${subjectID}`,
+          subjectID: subjectID,
+          classLevel: subjectData.classLevel,
+          requesterUid,
+          requesterName,
+          status: "pending",
+          createdAt: serverTimestamp(),
+        });
+        console.log("Approval request created.");
+      } catch (reqErr) {
+        console.error("Error creating approval request:", reqErr);
+      }
+      // เริ่มเล่น slideUp โดยเพิ่มคลาส hide หลังแสดง 2s
+      setTimeout(() => setHidingAlert(true), 2000);
+      // รอ animation (240ms) ให้จบก่อนลบ element และรีเซ็ตสถานะ
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setHidingAlert(false);
+      }, 2000 + 240);
     } catch (err) {
       console.error("Error updating document:", err);
     }
@@ -230,6 +260,16 @@ function GradeManagement() {
     <div style={{ background: "#BBBBBB" }}>
       <Navbar />
       <div className="p-3 page-detail">
+        {saveSuccess && (
+          <div
+            className={`floating-alert ${hidingAlert ? "hide" : ""}`}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            บันทึกเสร็จเรียบร้อย
+          </div>
+        )}
         <div className="bg-white page-detail-box">
           <div className="d-flex flex-column justify-content-center  fw-bold p-3 text-center w-100">
             <div
@@ -686,4 +726,4 @@ function GradeManagement() {
   );
 }
 
-export default GradeManagement;
+export default ManageSubjectScores;

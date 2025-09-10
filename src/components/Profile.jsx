@@ -102,6 +102,7 @@ function Profile() {
               classLevel: d.user?.classLevel || "-",
               taughtSubject: d.user?.taughtSubject || [],
               birthDate: d.user?.birthDate || "-",
+              gender: d.user?.gender || "-",
               ethnicity: d.user?.ethnicity || "-",
               nationality: d.user?.nationality || "-",
               religion: d.user?.religion || "-",
@@ -199,13 +200,13 @@ function Profile() {
                 <td>{userInfo.position}</td>
               </tr>
               <tr>
-                <th>
-                  {userInfo.position === "นักเรียน"
-                    ? "ระดับการศึกษา"
-                    : "วิชาที่สอน"}
-                </th>
-                <td>
-                  {userInfo.position === "ครู" ? (
+                {userInfo?.position === "นักเรียน" ? (
+                  <th>ระดับการศึกษา</th>
+                ) : userInfo?.position === "ครู" ? (
+                  <th>วิชาที่สอน</th>
+                ) : null}
+                {userInfo.position === "ครู" ? (
+                  <td>
                     <div className="d-flex">
                       <div className="d-flex flex-column justify-content-center align-items-start w-50 h-100">
                         {Array.isArray(userInfo?.taughtSubject)
@@ -244,12 +245,14 @@ function Profile() {
                             )?.classLevel || "-"}
                       </div>
                     </div>
-                  ) : (
+                  </td>
+                ) : userInfo?.position === "นักเรียน" ? (
+                  <td>
                     <div className="d-flex flex-column justify-content-center align-items-start w-100 h-100">
                       {userInfo.classLevel || "-"}
                     </div>
-                  )}
-                </td>
+                  </td>
+                ) : null}
               </tr>
               <tr>
                 <th>เกิดวันที่</th>
@@ -263,6 +266,12 @@ function Profile() {
                     : "-"}
                 </td>
               </tr>
+              {userInfo?.position === "นักเรียน" ? (
+                <tr>
+                  <th>เพศ</th>
+                  <td>{userInfo.gender || "-"}</td>
+                </tr>
+              ) : null}
               <tr>
                 <th>เชื้อชาติ</th>
                 <td>{userInfo.ethnicity}</td>
@@ -279,7 +288,7 @@ function Profile() {
           </table>
 
           <div className="profile-title mb-1">ที่อยู่ปัจจุบัน</div>
-          <table className="profile-table">
+          <table className="profile-table mb-5">
             <tbody>
               {[
                 ["บ้านเลขที่", profileData.address?.user?.houseNum],
@@ -333,7 +342,6 @@ function Profile() {
         </div>
       </div>
 
-      {/* Footer */}
       <Footer />
     </div>
   );

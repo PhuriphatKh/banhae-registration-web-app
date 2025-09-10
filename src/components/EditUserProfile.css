@@ -1,0 +1,80 @@
+.modal-review-header {
+  background: linear-gradient(90deg, #61c554, #a8e063);
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+.modal-review-body {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+/* 卡片 / review block */
+.review-card {
+  border-radius: 0.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* รายการ key/value */
+.review-list .list-group-item {
+  background: transparent;
+  border: none;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ป้ายชื่อฟิลด์ */
+.review-key {
+  font-weight: 600;
+  color: #333;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ค่าของฟิลด์ (ฝั่งขวา) */
+.review-value {
+  color: #222;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+/* ในขนาดจอเล็ก ให้ key อยู่ด้านบนและ value ขยายเต็ม */
+@media (max-width: 576px) {
+  .review-list .list-group-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .review-value {
+    text-align: left !important;
+    max-width: 100%;
+    margin-top: 0.25rem;
+  }
+}
+
+/* เพิ่มความโดดเด่นให้ badge วิชาที่สอน */
+.badge {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.55rem;
+}
+
+/* เลียนแบบ table header นุ่มนวล */
+.card-header.bg-light {
+  background-color: #f8f9fa !important;
+  font-weight: 600;
+}
+
+/* กำจัด scrollbar ที่จุกจิกบน Mac/Windows */
+.modal-review-body::-webkit-scrollbar {
+  height: 6px;
+  width: 8px;
+}
+.modal-review-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+}

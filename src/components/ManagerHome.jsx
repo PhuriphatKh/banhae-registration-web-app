@@ -8,9 +8,16 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Modal, Button } from "react-bootstrap";
 import { db } from "../firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { useUserAuth } from "../context/UserAuthContext";
 import "./ManagerHome.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -19,6 +26,7 @@ const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#00C49F"];
 
 function ManagerHome() {
   const { profileData } = useUserProfile();
+  const { firstName, lastName } = useUserAuth();
   const [personnelCounts, setPersonnelCounts] = useState({});
   const [studentCounts, setStudentCounts] = useState({});
   const [approvalRequests, setApprovalRequests] = useState([]);
@@ -27,6 +35,8 @@ function ManagerHome() {
   const [selectedStudentYear, setSelectedStudentYear] = useState(
     new Date().getFullYear()
   );
+  const [showModal, setShowModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -149,6 +159,32 @@ function ManagerHome() {
     value,
   }));
 
+  const handleShowModal = (request) => {
+    setSelectedRequest(request);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedRequest(null);
+  };
+
+  const handleApprove = async () => {
+    if (!selectedRequest) return;
+    try {
+      const approverName = `${firstName} ${lastName}`;
+      await updateDoc(doc(db, "approval_requests", selectedRequest.id), {
+        status: "approved",
+        approvedAt: serverTimestamp(),
+        approverName: approverName,
+      });
+      setShowModal(false);
+      setSelectedRequest(null);
+    } catch (err) {
+      alert("เกิดข้อผิดพลาดในการอนุมัติคำร้อง");
+    }
+  };
+
   return (
     <div
       className="screen manager-screen"
@@ -177,33 +213,44 @@ function ManagerHome() {
           <Row className="mt-3">
             <Col>
               <h5 className="mb-2">คำร้องขออนุมัติล่าสุด</h5>
-              {approvalRequests.length ? (
+              {approvalRequests.filter((r) => r.status === "pending").length ? (
                 <ul className="list-unstyled mb-3">
-                  {approvalRequests.slice(0, 6).map((r) => (
-                    <li key={r.id} className="py-1">
-                      <strong>{r.type}</strong> — {r.subjectID} / {r.classLevel}{" "}
-                      —{" "}
-                      <span className="text-muted">
-                        {r.requesterName ?? r.requesterUid ?? "ไม่ระบุ"} •{" "}
-                        {r.createdAt
-                          ? typeof r.createdAt.toDate === "function"
-                            ? r.createdAt.toDate().toLocaleString("th-TH")
-                            : new Date(r.createdAt).toLocaleString("th-TH")
-                          : "-"}
-                      </span>{" "}
-                      <span
-                        className={`badge ${
-                          r.status === "pending"
-                            ? "bg-warning text-dark"
-                            : r.status === "approved"
-                            ? "bg-success"
-                            : "bg-secondary"
-                        }`}
-                      >
-                        {r.status}
-                      </span>
-                    </li>
-                  ))}
+                  {approvalRequests
+                    .filter((r) => r.status === "pending")
+                    .slice(0, 6)
+                    .map((r) => (
+                      <li key={r.id} className="py-1">
+                        <strong>{r.type}</strong> — {r.subjectID} / {r.classLevel}{" "}
+                        —{" "}
+                        <span className="text-muted">
+                          {r.requesterName ?? r.requesterUid ?? "ไม่ระบุ"} •{" "}
+                          {r.createdAt
+                            ? typeof r.createdAt.toDate === "function"
+                              ? r.createdAt.toDate().toLocaleString("th-TH")
+                              : new Date(r.createdAt).toLocaleString("th-TH")
+                            : "-"}
+                        </span>{" "}
+                        <span
+                          className={`badge ${
+                            r.status === "pending"
+                              ? "bg-warning text-dark"
+                              : r.status === "approved"
+                              ? "bg-success"
+                              : "bg-secondary"
+                          }`}
+                        >
+                          {r.status}
+                        </span>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="badge bg-success text-dark ms-2"
+                          onClick={() => handleShowModal(r)}
+                        >
+                          ดูรายละเอียด
+                        </Button>
+                      </li>
+                    ))}
                 </ul>
               ) : (
                 <div className="text-muted mb-3">ไม่มีคำร้อง</div>
@@ -361,6 +408,91 @@ function ManagerHome() {
           </Row>
         </div>
       </div>
+      {/* Modal for request details */}
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>รายละเอียดคำร้อง</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedRequest ? (
+            <div>
+              <p>
+                <strong>ประเภท:</strong> {selectedRequest.type}
+              </p>
+              <p>
+                <strong>รหัสวิชา:</strong> {selectedRequest.subjectID || "-"}
+              </p>
+              <p>
+                <strong>ชั้นเรียน:</strong> {selectedRequest.classLevel || "-"}
+              </p>
+              <p>
+                <strong>ผู้ร้องขอ:</strong>{" "}
+                {selectedRequest.requesterName ??
+                  selectedRequest.requesterUid ??
+                  "-"}
+              </p>
+              <p>
+                <strong>วันที่ร้องขอ:</strong>{" "}
+                {selectedRequest.createdAt
+                  ? typeof selectedRequest.createdAt.toDate === "function"
+                    ? selectedRequest.createdAt.toDate().toLocaleString("th-TH")
+                    : new Date(selectedRequest.createdAt).toLocaleString(
+                        "th-TH"
+                      )
+                  : "-"}
+              </p>
+              <p>
+                <strong>สถานะ:</strong>{" "}
+                <span
+                  className={`badge ${
+                    selectedRequest.status === "pending"
+                      ? "bg-warning text-dark"
+                      : selectedRequest.status === "approved"
+                      ? "bg-success"
+                      : "bg-secondary"
+                  }`}
+                >
+                  {selectedRequest.status}
+                </span>
+              </p>
+              {selectedRequest.approverName && (
+                <p>
+                  <strong>ผู้อนุมัติ:</strong> {selectedRequest.approverName}
+                </p>
+              )}
+              {selectedRequest.approvedAt && (
+                <p>
+                  <strong>เวลาอนุมัติ:</strong>{" "}
+                  {typeof selectedRequest.approvedAt.toDate === "function"
+                    ? selectedRequest.approvedAt
+                        .toDate()
+                        .toLocaleString("th-TH")
+                    : new Date(selectedRequest.approvedAt).toLocaleString(
+                        "th-TH"
+                      )}
+                </p>
+              )}
+              {selectedRequest.detail && (
+                <p>
+                  <strong>รายละเอียดเพิ่มเติม:</strong> {selectedRequest.detail}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>ไม่พบข้อมูลคำร้อง</div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          {selectedRequest?.status === "pending" && (
+            <Button variant="success" onClick={handleApprove}>
+              อนุมัติ
+            </Button>
+          )}
+          <Button variant="secondary" onClick={handleCloseModal}>
+            ปิด
+          </Button>
+        </Modal.Footer>
+      </Modal>
       <Footer />
     </div>
   );

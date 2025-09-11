@@ -43,11 +43,6 @@ function AdminHome() {
               icon: "/training.png",
               label: "จัดการตารางสอน",
             },
-            {
-              path: "/school-record-management",
-              icon: "/education.png",
-              label: "จัดการผลการเรียน",
-            },
           ].map(({ path, icon, label }, i) => (
             <Link to={path} key={i} className="dashboard-card custom-h3">
               <img src={icon} alt={label} className="dashboard-icon" />
@@ -59,7 +54,6 @@ function AdminHome() {
 
       {/* Footer */}
       <Footer />
-      
     </div>
   );
 }

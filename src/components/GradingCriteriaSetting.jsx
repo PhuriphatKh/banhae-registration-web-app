@@ -57,7 +57,7 @@ export default function SettingsModal({ show, onClose, onSave, initial }) {
               </InputGroup.Text>
               <Form.Control
                 type="number"
-                name="grade4_0"
+                name="grade1_0"
                 className="text-center"
                 min={0}
                 value={form.grade1_0}

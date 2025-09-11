@@ -128,36 +128,47 @@ function Navbar() {
                   { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
                   { label: "ตารางสอน", path: `/teacher-table` },
                 ]
-              : [
+              : userRole === "นักเรียน"
+              ? [
                   { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
                   { label: "ตารางเรียน", path: `/student-table` },
                 ]
+              : [{ label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` }]
           }
           open={dropdowns.open2}
           setOpen={(open) => setDropdowns({ ...dropdowns, open2: open })}
           menuRef={menuRefs.menu2}
         />
-        <DropdownMenu
-          label="ประมวลผลการเรียน"
-          links={
-            userRole === "admin"
-              ? [
-                  {
-                    label: "จัดการผลการเรียน",
-                    path: "/school-record-management",
-                  },
-                ]
-              : userRole === "ครู"
-              ? [{ label: "จัดการคะแนนรายวิชา", path: `/grade-management` }]
-              : [{ label: "ผลคะแนนรายวิชา", path: `/student-records` }]
-          }
-          open={dropdowns.open3}
-          setOpen={(open) => setDropdowns({ ...dropdowns, open3: open })}
-          menuRef={menuRefs.menu3}
-        />
+        {userRole != "ผู้อำนวยการ" && (
+          <DropdownMenu
+            label="ประมวลผลการเรียน"
+            links={
+              userRole === "admin"
+                ? [
+                    {
+                      label: "จัดการผลการเรียน",
+                      path: "/school-record-management",
+                    },
+                  ]
+                : userRole === "ครู"
+                ? [{ label: "จัดการคะแนนรายวิชา", path: `/grade-management` }]
+                : [{ label: "ผลคะแนนรายวิชา", path: `/student-records` }]
+            }
+            open={dropdowns.open3}
+            setOpen={(open) => setDropdowns({ ...dropdowns, open3: open })}
+            menuRef={menuRefs.menu3}
+          />
+        )}
         <DropdownMenu
           label="คำร้อง"
-          links={[{ label: "ยังไม่เปิดการใช้งาน", path: "#", disabled: true }]}
+          links={
+            userRole === "ครู"
+              ? [
+                  { label: "ยื่นคำขออนุมัติ", path: "/request?type=submit" },
+                  { label: "ตรวจสอบคำขอ", path: "/request?type=check" },
+                ]
+              : [{ label: "ไม่เปิดใช้งาน", path: "#" }]
+          }
           open={dropdowns.open4}
           setOpen={(open) => setDropdowns({ ...dropdowns, open4: open })}
           menuRef={menuRefs.menu4}

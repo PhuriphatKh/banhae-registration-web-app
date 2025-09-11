@@ -7,8 +7,10 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { Form, Alert, Button } from "react-bootstrap";
 import { db } from "../firebase";
-import { updateDoc, setDoc, doc, getDoc, onSnapshot } from "firebase/firestore";
+import { updateDoc, setDoc, doc, getDoc, onSnapshot, collection } from "firebase/firestore";
 import logo from "../assets/logo.png";
+
+const SEMESTERS = [1, 2];
 
 function TeacherTableManagement() {
   const [regTeacherName, setRegTeacherName] = useState("");
@@ -16,8 +18,25 @@ function TeacherTableManagement() {
 
   const [teacherTable, setTeacherTable] = useState([]);
 
+  const [academicYears, setAcademicYears] = useState([]);
   const [regAcademicYear, setRegAcademicYear] = useState(2567);
   const [regSemester, setRegSemester] = useState(1);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "school_record"),
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setAcademicYears(data);
+        console.log("Year data updated:", data);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   const [regMon0830, setRegMon0830] = useState("-");
   const [regMon0930, setRegMon0930] = useState("-");
@@ -329,8 +348,11 @@ function TeacherTableManagement() {
                         <option value="" disabled>
                           -- ปีการศึกษา --
                         </option>
-                        <option value="2567">ปีการศึกษา 2567</option>
-                        <option value="2568">ปีการศึกษา 2568</option>
+                        {academicYears.map((year) => (
+                          <option key={year.id} value={year.id}>
+                            ปีการศึกษา {year.id}
+                          </option>
+                        ))}
                       </Form.Select>
                     </div>
                     <div class="select-wrapper" style={{ width: "33.33%" }}>
@@ -343,8 +365,11 @@ function TeacherTableManagement() {
                         <option value="" disabled>
                           -- ภาคเรียนที่ --
                         </option>
-                        <option value="1">ภาคเรียนที่ 1</option>
-                        <option value="2">ภาคเรียนที่ 2</option>
+                        {SEMESTERS.map((sem) => (
+                          <option key={sem} value={sem}>
+                            ภาคเรียนที่ {sem}
+                          </option>
+                        ))}
                       </Form.Select>
                     </div>
                   </div>

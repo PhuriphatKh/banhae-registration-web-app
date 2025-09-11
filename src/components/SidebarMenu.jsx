@@ -50,10 +50,12 @@ export default function SidebarMenu({ firstName, lastName, handleLogout }) {
                 { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
                 { label: "ตารางสอน", path: `/teacher-table` },
               ]
-            : [
+            : userRole === "นักเรียน"
+            ? [
                 { label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` },
                 { label: "ตารางเรียน", path: `/student-table` },
               ]
+            : [{ label: "ข้อมูลส่วนตัว", path: `/profile?id=${user.uid}` }]
           ).map((item, idx) => (
             <Link key={idx} to={item.path}>
               {item.label}
@@ -62,37 +64,44 @@ export default function SidebarMenu({ firstName, lastName, handleLogout }) {
         </div>
       </div>
 
-      <div className="sidebar-menu-item">
-        <button
-          type="button"
-          onClick={() => toggleMenu("grade")}
-          aria-expanded={openMenu === "grade"}
-          aria-controls="dd-grade"
-        >
-          <span>ประมวลผลการเรียน</span>
-          <span
-            className={`chev ${openMenu === "grade" ? "open" : ""}`}
-            aria-hidden
-          />
-        </button>
-        <div
-          id="dd-grade"
-          className={`sidebar-dropdown ${openMenu === "grade" ? "show" : ""}`}
-          role="region"
-          aria-label="เมนูย่อย ประมวลผลการเรียน"
-        >
-          {(userRole === "admin"
-            ? [{ label: "จัดการผลการเรียน", path: "/school-record-management" }]
-            : userRole === "ครู"
-            ? [{ label: "จัดการคะแนนรายวิชา", path: `/grade-management` }]
-            : [{ label: "ผลคะแนนรายวิชา", path: `/student-records` }]
-          ).map((item, idx) => (
-            <Link key={idx} to={item.path}>
-              {item.label}
-            </Link>
-          ))}
+      {userRole != "ผู้อำนวยการ" && (
+        <div className="sidebar-menu-item">
+          <button
+            type="button"
+            onClick={() => toggleMenu("grade")}
+            aria-expanded={openMenu === "grade"}
+            aria-controls="dd-grade"
+          >
+            <span>ประมวลผลการเรียน</span>
+            <span
+              className={`chev ${openMenu === "grade" ? "open" : ""}`}
+              aria-hidden
+            />
+          </button>
+          <div
+            id="dd-grade"
+            className={`sidebar-dropdown ${openMenu === "grade" ? "show" : ""}`}
+            role="region"
+            aria-label="เมนูย่อย ประมวลผลการเรียน"
+          >
+            {(userRole === "admin"
+              ? [
+                  {
+                    label: "จัดการผลการเรียน",
+                    path: "/school-record-management",
+                  },
+                ]
+              : userRole === "ครู"
+              ? [{ label: "จัดการคะแนนรายวิชา", path: `/grade-management` }]
+              : [{ label: "ผลคะแนนรายวิชา", path: `/student-records` }]
+            ).map((item, idx) => (
+              <Link key={idx} to={item.path}>
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="sidebar-menu-item">
         <button

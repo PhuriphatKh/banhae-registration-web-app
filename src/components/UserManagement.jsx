@@ -267,6 +267,7 @@ function UserManagement() {
 
       if (regPosition === "นักเรียน") {
         userProfile.user.studentID = lastStudentID;
+        userProfile.user.classLevel = regClassLevel;
       } else if (regPosition === "ครู") {
         userProfile.user.teacherID = lastTeacherID;
       } else if (regPosition === "แอดมิน") {

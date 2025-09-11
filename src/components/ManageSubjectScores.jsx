@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, Alert } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router";
 import { useUserProfile } from "../context/ProfileDataContex";
+import { useUserAuth } from "../context/UserAuthContext";
 import GradingCriteriaSetting from "./GradingCriteriaSetting";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -15,6 +16,7 @@ import {
   setDoc,
   addDoc,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
@@ -68,6 +70,9 @@ function ManageSubjectScores() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profileData } = useUserProfile();
+  const { firstName, lastName } = useUserAuth();
+
+  const thisYear = new Date().getFullYear() + 543;
 
   // ---------- Effects ----------
   useEffect(() => {
@@ -96,17 +101,26 @@ function ManageSubjectScores() {
     const ref = doc(
       db,
       "school_record",
-      "2567",
+      thisYear.toString(),
       subjectData.classLevel,
       subjectID
     );
-
     const unsub1 = onSnapshot(ref, (snap) => {
       const data = snap.data();
       if (data) {
         setStudentScores(data.students || {});
         setScoringCriteria(data.scoring_criteria || {});
-        setGradingCriteria(data.grading_criteria || null);
+        setGradingCriteria(
+          data.grading_criteria || {
+            grade4_0: 80,
+            grade3_5: 75,
+            grade3_0: 70,
+            grade2_5: 65,
+            grade2_0: 60,
+            grade1_5: 55,
+            grade1_0: 50,
+          }
+        );
       }
     });
     return unsub1;
@@ -189,12 +203,49 @@ function ManageSubjectScores() {
       const ref = doc(
         db,
         "school_record",
-        "2567",
+        thisYear.toString(),
         subjectData.classLevel,
         subjectID
       );
-      await setDoc(ref, { grading_criteria: form });
+
+      const docSnap = await getDoc(ref);
+      if (!docSnap.exists()) {
+        await setDoc(ref, { added: true }, { merge: true });
+      }
+
+      // คำนวณผลลัพธ์ใหม่จาก grading criteria ที่บันทึก
+      const updatedScores = { ...studentScores };
+      const payload = { grading_criteria: form };
+
+      Object.keys(updatedScores).forEach((sid) => {
+        const s = updatedScores[sid] || {};
+        // หาจำนวนรวมจาก term_x.total หรือ grandTotal ถ้ามี
+        const termEntries = Object.entries(s).filter(([k]) =>
+          k.startsWith("term_")
+        );
+        const grandTotal =
+          termEntries.length > 0
+            ? termEntries.reduce((sum, [, v]) => sum + Number(v.total || 0), 0)
+            : Number(s.grandTotal || 0);
+
+        const hasBlank = termEntries.some(([, v]) =>
+          ["indicator", "during", "final"].some((k) => !v?.[k] && v?.[k] !== 0)
+        );
+
+        const result = hasBlank ? "ร" : pickGradeFromCriteria(grandTotal, form);
+
+        // อัพเดต object ใน state และ payload ที่จะเขียนขึ้น Firestore
+        updatedScores[sid] = { ...s, grandTotal, result };
+        payload[`students.${sid}.grandTotal`] = grandTotal;
+        payload[`students.${sid}.result`] = result;
+      });
+
+      // เขียน grading_criteria พร้อมผลการคำนวณของนักเรียน
+      await updateDoc(ref, payload);
+
+      // อัพเดต local state
       setGradingCriteria(form);
+      setStudentScores(updatedScores);
     } catch (error) {
       console.error("Error saving grading criteria:", error);
     }
@@ -205,26 +256,55 @@ function ManageSubjectScores() {
       const ref = doc(
         db,
         "school_record",
-        "2567",
+        thisYear.toString(),
         subjectData.classLevel,
         subjectID
       );
+
+      // ตรวจสอบว่า document มีอยู่หรือไม่ ถ้าไม่มีให้สร้างก่อน (upsert)
+      const docSnap = await getDoc(ref);
+      if (!docSnap.exists()) {
+        await setDoc(ref, { added: true }, { merge: true });
+      }
+
+      // เตรียม payload โดยคำนวณ grandTotal + result สำหรับแต่ละนักเรียน
       const payload = { scoring_criteria: scoringCriteria };
       const allIds = Object.keys(studentScores);
+      const updatedScores = { ...studentScores };
+
       for (const sid of allIds) {
         const scoreObj = studentScores[sid] || {};
-        payload[`students.${sid}`] = {
-          ...scoreObj,
-        };
+
+        const termEntries = Object.entries(scoreObj).filter(([k]) =>
+          k.startsWith("term_")
+        );
+        const grandTotal =
+          termEntries.length > 0
+            ? termEntries.reduce((sum, [, v]) => sum + Number(v.total || 0), 0)
+            : Number(scoreObj.grandTotal || 0);
+
+        const hasBlank = termEntries.some(([, v]) =>
+          ["indicator", "during", "final"].some((k) => !v?.[k] && v?.[k] !== 0)
+        );
+
+        const result = hasBlank ? "ร" : pickGradeFromCriteria(grandTotal, gradingCriteria);
+
+        const updatedStudent = { ...scoreObj, grandTotal, result };
+        updatedScores[sid] = updatedStudent;
+
+        payload[`students.${sid}`] = { ...updatedStudent };
       }
+
       await updateDoc(ref, payload);
       console.log("All scores saved successfully.");
+      setStudentScores(updatedScores);
       setSaveSuccess(true);
+
       // create approval request
       try {
         const auth = getAuth();
         const requesterUid = auth.currentUser?.uid ?? null;
-        const requesterName = auth.currentUser?.displayName ?? null;
+        const requesterName = `${firstName} ${lastName}` || "ไม่ระบุ";
         await addDoc(collection(db, "approval_requests"), {
           type: "score_update",
           school_record_path: `school_record/2567/${subjectData.classLevel}/${subjectID}`,
@@ -239,6 +319,7 @@ function ManageSubjectScores() {
       } catch (reqErr) {
         console.error("Error creating approval request:", reqErr);
       }
+
       // เริ่มเล่น slideUp โดยเพิ่มคลาส hide หลังแสดง 2s
       setTimeout(() => setHidingAlert(true), 2000);
       // รอ animation (240ms) ให้จบก่อนลบ element และรีเซ็ตสถานะ

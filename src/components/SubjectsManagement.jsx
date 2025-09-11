@@ -13,6 +13,7 @@ import {
   collection,
   deleteDoc,
   deleteField,
+  arrayRemove,
 } from "firebase/firestore";
 import logo from "../assets/logo.png";
 import Navbar from "./Navbar";
@@ -57,8 +58,9 @@ function SubjectsManagement() {
   }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
     setError("");
+    e.preventDefault();
+    const thisYear = new Date().getFullYear() + 543;
 
     try {
       await setDoc(doc(db, "subjects", regSubjectID), {
@@ -67,11 +69,24 @@ function SubjectsManagement() {
         classLevel: regClassLevel,
       });
 
+      await setDoc(
+        doc(
+          db,
+          "school_record",
+          thisYear.toString(),
+          regClassLevel,
+          regSubjectID
+        ),
+        { added: true },
+        { merge: true }
+      );
+
       console.log("✅ Saved to Firestore!");
 
       // ✅ เคลียร์ฟอร์ม
       setRegSubjectID("");
       setRegSubjectName("");
+      setRegSubjectGroup("");
 
       // ปิด modal
       handleClose();
@@ -114,18 +129,17 @@ function SubjectsManagement() {
     }
   };
 
-  const handleDelete = async (teacherID, subjectID) => {
+  const handleDelete = async (teacherId, subjectId) => {
     try {
-      await deleteDoc(doc(db, "subjects", subjectID));
-      await setDoc(
-        doc(db, "profile", teacherID),
-        {
-          user: {
-            taughtSubject: deleteField(),
-          },
-        },
-        { merge: true }
-      );
+      await deleteDoc(doc(db, "subjects", subjectId));
+      // หากมี teacherId ให้ลบ reference ใน profile เท่านั้น
+      if (teacherId) {
+        await updateDoc(doc(db, "profile", teacherId), {
+          "user.taughtSubject": arrayRemove(subjectId),
+        });
+      } else {
+        console.warn("No teacherId for subject", subjectId);
+      }
     } catch (err) {
       console.error("❌ Error deleting subject:", err);
     }
@@ -312,7 +326,7 @@ function SubjectsManagement() {
                                           variant="danger"
                                           onClick={() =>
                                             handleDelete(
-                                              subject.teacher,
+                                              subject.teacherId,
                                               subject.id
                                             )
                                           }
@@ -403,7 +417,9 @@ function SubjectsManagement() {
                               placeholder="กลุ่มสาระการเรียนรู้"
                               className="modern-input"
                               value={regSubjectGroup}
-                              onChange={(e) => setRegSubjectGroup(e.target.value)}
+                              onChange={(e) =>
+                                setRegSubjectGroup(e.target.value)
+                              }
                             />
                           </Col>
                         </Row>

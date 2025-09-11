@@ -6,6 +6,7 @@ import Dropdown from "react-bootstrap/Dropdown";
 import { Link, useNavigate } from "react-router";
 import { Form, Alert, Button } from "react-bootstrap";
 import { useUserAuth } from "./context/UserAuthContext";
+import HomePageDetail from "./components/HomePageDetail";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
@@ -18,7 +19,6 @@ function App() {
     let handler = (e) => {
       if (!menuRef.current.contains(e.target)) {
         setOpen(false);
-        console.log(menuRef.current);
       }
     };
 
@@ -158,15 +158,7 @@ function App() {
         </div>
       </div>
 
-      <div className="detail-container">
-        <div className="pic-container">รูปภาพ</div>
-
-        <div className="news-header-container custom-h2">
-          ข่าวสารกิจกรรมโรงเรียนบ้านแฮะ
-        </div>
-
-        <div className="news-container"></div>
-      </div>
+      <HomePageDetail />
 
       <div className="footer">
         <div className="custom-h3">ติดต่อเรา</div>

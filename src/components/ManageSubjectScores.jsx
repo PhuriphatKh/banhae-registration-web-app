@@ -300,26 +300,6 @@ function ManageSubjectScores() {
       setStudentScores(updatedScores);
       setSaveSuccess(true);
 
-      // create approval request
-      try {
-        const auth = getAuth();
-        const requesterUid = auth.currentUser?.uid ?? null;
-        const requesterName = `${firstName} ${lastName}` || "ไม่ระบุ";
-        await addDoc(collection(db, "approval_requests"), {
-          type: "score_update",
-          school_record_path: `school_record/2567/${subjectData.classLevel}/${subjectID}`,
-          subjectID: subjectID,
-          classLevel: subjectData.classLevel,
-          requesterUid,
-          requesterName,
-          status: "pending",
-          createdAt: serverTimestamp(),
-        });
-        console.log("Approval request created.");
-      } catch (reqErr) {
-        console.error("Error creating approval request:", reqErr);
-      }
-
       // เริ่มเล่น slideUp โดยเพิ่มคลาส hide หลังแสดง 2s
       setTimeout(() => setHidingAlert(true), 2000);
       // รอ animation (240ms) ให้จบก่อนลบ element และรีเซ็ตสถานะ

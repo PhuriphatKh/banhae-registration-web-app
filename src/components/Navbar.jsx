@@ -167,6 +167,8 @@ function Navbar() {
                   { label: "ยื่นคำขออนุมัติ", path: "/request?type=submit" },
                   { label: "ตรวจสอบคำขอ", path: "/request?type=check" },
                 ]
+              : userRole === "ผู้อำนวยการ"
+              ? [{ label: "ตรวจสอบคำร้อง", path: "/approval-request" }]
               : [{ label: "ไม่เปิดใช้งาน", path: "#" }]
           }
           open={dropdowns.open4}
